@@ -1,0 +1,9 @@
+learner_id,topic,sequence_position,activity_views,lesson_sessions,question_interactions,quiz_attempts,best_score,latest_score,score_trend,quiz_time,lesson_time_estimate,completed_activities,topic_completion_pct,mastery_level,last_activity
+3,Variables and Data Types,4,85,12,43,1,0.9,0.9,0.0,57,5005,0,0.0,high,2026-09-16 19:19:53
+3,Conditions,8,26,6,13,1,1.0,1.0,0.0,52,4335,0,0.0,high,2026-09-16 19:59:45
+3,Loops,12,9,2,8,1,0.9,0.9,0.0,31,288,0,0.0,high,2026-09-16 20:04:07
+3,Functions,14,3,3,0,1,0.9,0.9,0.0,73,78,0,0.0,high,2026-09-17 11:05:31
+5,Variables and Data Types,4,10,1,4,2,1.0,1.0,0.4,172,315,0,0.0,high,2026-09-21 22:41:07
+5,Conditions,8,11,1,9,2,1.0,1.0,0.5,118,148,0,0.0,high,2026-09-21 22:43:33
+5,Loops,12,7,1,5,1,0.8,0.8,0.0,56,115,0,0.0,high,2026-09-21 22:45:28
+5,Functions,14,11,1,5,2,0.8,0.8,0.10000000000000009,823,965,0,0.0,high,2026-09-21 23:01:43

@@ -1,0 +1,15 @@
+course_module_id,section_id,section_number,activity_type,activity_id,activity_name,topic,sequence,visible,completion_tracking
+1,1,0,resource,1,Syllabus,Topic 0,1,1,0
+3,1,0,forum,1,Announcements,Topic 0,2,1,0
+16,1,0,qbank,1,,Topic 0,3,0,0
+2,2,1,quiz,1,Python variable quiz,Variables and Data Types,4,1,0
+4,2,1,resource,2,Python Variables,Variables and Data Types,5,1,0
+7,2,1,lesson,1,Python Variables Lesson,Variables and Data Types,6,1,0
+5,3,2,resource,3,Python If-statements,Conditions,7,1,0
+6,3,2,quiz,2,Python cond quiz,Conditions,8,1,0
+12,3,2,lesson,3,Python conditions lesson,Conditions,9,1,0
+9,4,3,page,1,Python loops,Loops,10,1,0
+13,4,3,lesson,4,Python loops lesson,Loops,11,1,0
+15,4,3,quiz,5,Python loops quiz,Loops,12,1,0
+17,5,4,lesson,5,Python functions lesson,Functions,13,1,0
+18,5,4,quiz,6,Python functions quiz,Functions,14,1,0

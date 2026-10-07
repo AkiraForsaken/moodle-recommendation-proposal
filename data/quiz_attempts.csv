@@ -1,0 +1,12 @@
+learner_id,quiz_id,quiz_name,topic,sequence_position,attempt,state,score,max_score,normalized_score,mastery_threshold_reached,start_time,finish_time,duration_seconds,start_time_unix,finish_time_unix
+3,1,Python variable quiz,Variables and Data Types,4,1,finished,9.0,10.0,0.9,1,2026-09-16 15:57:53,2026-09-16 15:58:50,57,1789549073,1789549130
+3,2,Python cond quiz,Conditions,8,1,finished,10.0,10.0,1.0,1,2026-09-16 19:58:53,2026-09-16 19:59:45,52,1789563533,1789563585
+3,5,Python loops quiz,Loops,12,1,finished,9.0,10.0,0.9,1,2026-09-16 20:03:12,2026-09-16 20:03:43,31,1789563792,1789563823
+3,6,Python functions quiz,Functions,14,1,finished,9.0,10.0,0.9,1,2026-09-16 21:08:28,2026-09-16 21:09:41,73,1789567708,1789567781
+5,1,Python variable quiz,Variables and Data Types,4,1,finished,6.0,10.0,0.6,0,2026-09-21 22:35:57,2026-09-21 22:38:21,144,1790004957,1790005101
+5,1,Python variable quiz,Variables and Data Types,4,2,finished,10.0,10.0,1.0,1,2026-09-21 22:38:26,2026-09-21 22:38:54,28,1790005106,1790005134
+5,2,Python cond quiz,Conditions,8,1,finished,5.0,10.0,0.5,0,2026-09-21 22:41:32,2026-09-21 22:41:58,26,1790005292,1790005318
+5,2,Python cond quiz,Conditions,8,2,finished,10.0,10.0,1.0,1,2026-09-21 22:42:01,2026-09-21 22:43:33,92,1790005321,1790005413
+5,5,Python loops quiz,Loops,12,1,finished,8.0,10.0,0.8,1,2026-09-21 22:44:22,2026-09-21 22:45:18,56,1790005462,1790005518
+5,6,Python functions quiz,Functions,14,1,finished,7.0,10.0,0.7,0,2026-09-21 22:47:47,2026-09-21 22:50:40,173,1790005667,1790005840
+5,6,Python functions quiz,Functions,14,2,finished,8.0,10.0,0.8,1,2026-09-21 22:50:47,2026-09-21 23:01:37,650,1790005847,1790006497
