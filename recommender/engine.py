@@ -1,82 +1,81 @@
+"""Orchestration: fit every recommender once, serve ranked Next Best Activity lists."""
+
+from typing import Dict, Iterable, List, Optional
+
 import pandas as pd
-from pathlib import Path
 
-# Local imports
-from .methods import (
-    rule_based_recommendation,
-    popularity_based_recommendation,
-    content_based_recommendation,
-    collaborative_filtering_recommendation,
-    get_uncompleted_catalog,
-)
+from .base import BaseRecommender, Recommendation, to_frame
+from .collaborative import CollaborativeRecommender
+from .content_based import ContentBasedRecommender
+from .data import RecommenderData
+from .popularity import PopularityRecommender
+from .rule_based import RuleBasedRecommender
 
 
-def run_baseline_recommendations(learner_id, data_dir=None):
+class RecommendationEngine:
     """
-    Reads the structured state from learner_model.csv and ranks the Next Best Activity
-    based on multiple baseline approaches[cite: 3].
+    The engine depends only on `RecommenderData`, so Moodle and OULAD frames go
+    through exactly the same code. If a method returns fewer than k items (cold
+    start, course complete, no neighbours) the gap is filled from `fallback`
+    and those rows are flagged `via_fallback=True` -- never silently.
     """
-    if data_dir is None:
-        data_dir = Path(__file__).resolve().parent.parent / "data"
-    else:
-        data_dir = Path(data_dir)
 
-    # 1. Load Required Artifacts
-    try:
-        learner_model = pd.read_csv(data_dir / "learner_model.csv")
-        catalog = pd.read_csv(data_dir / "activity_catalog.csv")
-        events = pd.read_csv(data_dir / "learning_events.csv")
-    except FileNotFoundError as e:
-        return f"Error loading data: {e}"
+    def __init__(self, data: RecommenderData,
+                 recommenders: Optional[Iterable[BaseRecommender]] = None,
+                 fallback: Optional[str] = "popularity"):
+        recommenders = recommenders or [
+            RuleBasedRecommender(), PopularityRecommender(),
+            ContentBasedRecommender(), CollaborativeRecommender(),
+        ]
+        self.data = data
+        self.fallback = fallback
+        self.recommenders: Dict[str, BaseRecommender] = {r.name: r.fit(data) for r in recommenders}
+        if fallback and fallback not in self.recommenders:
+            raise ValueError(f"fallback {fallback!r} is not a registered method")
 
-    print(f"--- Generating Baseline Recommendations for Learner {learner_id} ---")
+    @property
+    def methods(self) -> List[str]:
+        return list(self.recommenders)
 
-    # 2. Rule-Based
-    rule_recs, rule_reason = rule_based_recommendation(
-        learner_id, learner_model, catalog
-    )
-    print(f"\n[Knowledge-Based] {rule_reason}")
-    if not rule_recs.empty:
-        print(
-            f"Top Pick: {rule_recs.iloc[0]['activity_name']} (Type: {rule_recs.iloc[0]['activity_type']})"
-        )
+    def recommend(self, learner_id: int, k: int = 5, method: str = "rule_based") -> List[Recommendation]:
+        if method not in self.recommenders:
+            raise KeyError(f"unknown method {method!r}; choose from {self.methods}")
+        recs = self.recommenders[method].recommend(learner_id, k)
 
-    # 3. Content-Based
-    content_recs, content_reason = content_based_recommendation(
-        learner_id, learner_model, catalog
-    )
-    print(f"\n[Content-Based] {content_reason}")
-    if not content_recs.empty:
-        print(
-            f"Top Pick: {content_recs.iloc[0]['activity_name']} (Topic: {content_recs.iloc[0]['topic']})"
-        )
+        if len(recs) < k and self.fallback and method != self.fallback:
+            have = {r.course_module_id for r in recs}
+            extra = self.recommenders[self.fallback].recommend(learner_id, k + len(have))
+            for r in extra:
+                if r.course_module_id in have or len(recs) >= k:
+                    continue
+                r.via_fallback = True
+                r.method = method  # attribute to the REQUESTED method; source is in the reason
+                r.reason = f"[{method} had no pick; {self.fallback} fallback] {r.reason}"
+                recs.append(r)
+        for i, r in enumerate(recs, start=1):
+            r.rank = i
+        return recs
 
-    # 4. Popularity-Based
-    uncompleted_catalog = get_uncompleted_catalog(learner_id, learner_model, catalog)
-    pop_recs, pop_reason = popularity_based_recommendation(uncompleted_catalog, events)
-    print(f"\n[Popularity-Based] {pop_reason}")
-    if not pop_recs.empty:
-        print(
-            f"Top Pick: {pop_recs.iloc[0]['activity_name']} (Views: {pop_recs.iloc[0].get('global_activity_views', 0)})"
-        )
-
-    # 5. Collaborative Filtering
-    cf_recs, cf_reason = collaborative_filtering_recommendation(
-        learner_id, learner_model, catalog
-    )
-    print(f"\n[Collaborative Filtering] {cf_reason}")
-    if not cf_recs.empty:
-        print(f"Top Pick: {cf_recs.iloc[0]['activity_name']}")
-
-    # Return structured output for Phase 4 Evaluation
-    return {
-        "rule_based": rule_recs,
-        "content_based": content_recs,
-        "popularity_based": pop_recs,
-        "collaborative": cf_recs,
-    }
+    def recommend_all(self, learner_id: int, k: int = 5) -> pd.DataFrame:
+        return to_frame([r for m in self.methods for r in self.recommend(learner_id, k, m)])
 
 
-if __name__ == "__main__":
-    # Test execution for Learner ID 3
-    run_baseline_recommendations(learner_id=3)
+def run_baseline_recommendations(learner_id, data_dir=None, k: int = 5,
+                                 methods: Optional[List[str]] = None, verbose: bool = True):
+    """Back-compatible entry point. Returns {method: DataFrame} with one shared schema."""
+    data = RecommenderData.from_moodle_csv(data_dir)  # raises FileNotFoundError if inputs are missing
+    engine = RecommendationEngine(data)
+    results = {}
+    if verbose:
+        print(f"--- Baseline recommendations for learner {learner_id} (top {k}) ---")
+    for m in methods or engine.methods:
+        frame = to_frame(engine.recommend(learner_id, k, m))
+        results[m] = frame
+        if verbose:
+            print(f"\n[{m}]")
+            if frame.empty:
+                print("  (no recommendation)")
+            for r in frame.itertuples():
+                flag = " ↻" if r.is_review else ""
+                print(f"  {r.rank}. {r.activity_name} ({r.activity_type}, {r.topic}){flag}\n     {r.reason}")
+    return results

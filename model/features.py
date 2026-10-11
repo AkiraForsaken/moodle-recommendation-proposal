@@ -7,6 +7,8 @@ def extract_quiz_features(quizzes, activity_lookup):
     """
     quizzes = quizzes.copy()
     quizzes["quiz_id"] = pd.to_numeric(quizzes["quiz_id"], errors="coerce")
+    # latest_score uses .last(), so attempts must be in attempt order
+    quizzes = quizzes.sort_values(["learner_id", "quiz_id", "attempt"])
 
     # Aggregate basic quiz features per learner and quiz
     quiz_summary = quizzes.groupby(
