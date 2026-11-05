@@ -88,6 +88,14 @@ def test_non_learning_content_is_never_recommendable():
     assert d.topic_order == [T1, T2, T3, T4]
 
 
+def test_section_zero_learner_state_is_ignored():
+    d = make_data(
+        [lm_row(1, "Topic 0", "unknown"), lm_row(1, T1, "low")]
+    )
+    assert "Topic 0" not in d.state(1).topics
+    assert set(d.learner_model["topic"]) == {T1}
+
+
 def test_missing_columns_fail_loudly():
     with pytest.raises(ValueError, match="learner_model is missing"):
         RecommenderData(CATALOG, pd.DataFrame({"mastery_level": ["low"]}))

@@ -66,7 +66,18 @@ def build_learner_model_from_frames(
     )
 
     # Catalog preparation
-    activity_lookup = activities[
+    activity_lookup = activities.copy()
+    if "section_number" in activity_lookup.columns:
+        section_numbers = pd.to_numeric(
+            activity_lookup["section_number"], errors="coerce"
+        )
+        activity_lookup = activity_lookup.loc[section_numbers.ne(0)]
+    else:
+        # Older catalog exports may not include the section number.
+        topics = activity_lookup["topic"].astype("string").str.strip()
+        activity_lookup = activity_lookup.loc[topics.ne("Topic 0")]
+
+    activity_lookup = activity_lookup[
         [
             "course_module_id",
             "activity_type",

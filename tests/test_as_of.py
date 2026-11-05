@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from model.build_model import COLUMNS_ORDERED, build_learner_model_from_frames
-from model.temporal import resolve_cutoff, truncate_frames
+from learner_model.build_model import COLUMNS_ORDERED, build_learner_model_from_frames
+from learner_model.temporal import resolve_cutoff, truncate_frames
 from recommender.data import RecommenderData
 from recommender.engine import RecommendationEngine
 
@@ -249,6 +249,24 @@ def test_recommendation_changes_as_the_learner_progresses():
         "lesson",
     )  # low -> review
     assert later.topic == "T2"  # mastered -> advance
+
+
+def test_section_zero_never_becomes_a_learner_topic():
+    section_zero = ACTIVITIES.iloc[[0]].copy()
+    section_zero.loc[:, "course_module_id"] = 99
+    section_zero.loc[:, "activity_type"] = "quiz"
+    section_zero.loc[:, "activity_id"] = 99
+    section_zero.loc[:, "activity_name"] = "General quiz"
+    section_zero.loc[:, "topic"] = "Topic 0"
+    section_zero.loc[:, "sequence"] = 0
+    section_zero.loc[:, "section_number"] = 0
+    catalog = pd.concat([ACTIVITIES, section_zero], ignore_index=True)
+
+    events = make_events([(1, 4, "content_view", 0), (1, 99, "content_view", 30)])
+    quizzes = make_quizzes([(1, 1, 1, 0.9, 300), (1, 99, 1, 0.9, 330)])
+    model = build_learner_model_from_frames(catalog, events, quizzes)
+
+    assert set(model["topic"]) == {"T1"}
 
 
 # ---------------------------------------------------------------- regression on the real export

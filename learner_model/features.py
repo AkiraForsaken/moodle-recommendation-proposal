@@ -33,7 +33,7 @@ def extract_quiz_features(quizzes, activity_lookup):
     # Merge topics back to the quiz features
     quiz_summary = quiz_summary.merge(quiz_topic_lookup, on="quiz_id", how="left")
 
-    return quiz_summary
+    return quiz_summary.dropna(subset=["topic"])
 
 
 def extract_event_features(events, activity_lookup):

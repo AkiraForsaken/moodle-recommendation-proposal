@@ -221,3 +221,8 @@ __marimo__/
 
 text_aggregate.py
 aggregated_code.txt
+directory_structure.py
+*_package.txt
+experiment/
+
+/data/

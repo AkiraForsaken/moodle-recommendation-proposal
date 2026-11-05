@@ -7,7 +7,7 @@ from pathlib import Path
 import pandas as pd
 
 from adapters.oulad_adapter import transform_oulad_to_collector_schema
-from model.build_model import build_learner_model
+from learner_model.build_model import build_learner_model
 from recommender.data import RecommenderData
 from recommender.engine import RecommendationEngine, run_baseline_recommendations
 

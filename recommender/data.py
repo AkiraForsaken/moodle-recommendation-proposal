@@ -138,6 +138,7 @@ class RecommenderData:
         lm["learner_id"] = pd.to_numeric(lm["learner_id"], errors="coerce")
         lm = lm.dropna(subset=["learner_id"])
         lm["learner_id"] = lm["learner_id"].astype(int)
+        lm = lm[lm["topic"].isin(self.catalog["topic"])]
         self.learner_model = lm
 
         if interactions is None or interactions.empty:

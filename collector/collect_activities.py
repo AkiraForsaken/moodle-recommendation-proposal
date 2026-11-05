@@ -10,7 +10,10 @@ def collect_activity_catalog(cursor, course_id):
             cm.id AS course_module_id,
             cs.id AS section_id,
             cs.section AS section_number,
-            COALESCE(NULLIF(cs.name, ''), CONCAT('Topic ', cs.section)) AS topic,
+            CASE
+                WHEN cs.section = 0 THEN NULL
+                ELSE COALESCE(NULLIF(cs.name, ''), CONCAT('Topic ', cs.section))
+            END AS topic,
             m.name AS activity_type,
             cm.instance AS activity_id,
             CASE m.name

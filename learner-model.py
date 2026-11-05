@@ -9,8 +9,7 @@ Reads the collector's CSVs from the data directory (default: ./data) and writes
 learner_model.csv next to them. All logic lives in the `model/` package.
 """
 
-from model import main
-
+from learner_model import main
 
 if __name__ == "__main__":
     main()
