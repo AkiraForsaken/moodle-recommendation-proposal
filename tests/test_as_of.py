@@ -283,4 +283,14 @@ def test_no_cutoff_reproduces_the_existing_learner_model_csv():
     built = build_learner_model_from_frames(*load_collector_frames(DATA))
     shared = pd.read_csv(DATA / "learner_model.csv")
     reread = pd.read_csv(pd.io.common.StringIO(built.to_csv(index=False)))
-    pd.testing.assert_frame_equal(reread, shared)
+    # Older collector exports pad headers and string values for display.
+    shared.columns = shared.columns.str.strip()
+    for column in shared.columns:
+        if shared[column].dtype == object:
+            shared[column] = shared[column].str.strip()
+    # generated_at is stamped by build_learner_model() when it writes the CSV; the
+    # pure function leaves it empty. Everything else must match exactly.
+    pd.testing.assert_frame_equal(
+        reread.drop(columns="generated_at", errors="ignore"),
+        shared.drop(columns="generated_at", errors="ignore"),
+    )

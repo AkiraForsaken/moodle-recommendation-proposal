@@ -225,4 +225,4 @@ directory_structure.py
 *_package.txt
 experiment/
 
-/data/
+data/

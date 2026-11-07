@@ -13,7 +13,8 @@ from fastapi import Depends, FastAPI, Header, HTTPException, Path, Query
 from pydantic import BaseModel
 
 from learner_model.build_model import build_learner_model
-from recommender.state import find_focus
+from recommender.config import MASTERY_PROB_COLUMN
+from recommender.state import find_focus, read_mastery
 
 from .settings import PROJECT_ROOT, Settings
 from .store import NotReady, Store
@@ -24,9 +25,12 @@ BANDS = ("high", "medium", "low", "unknown")
 
 # --------------------------------------------------------------------------- schemas
 class Cell(BaseModel):
-    mastery_level: str
+    mastery_level: (
+        str  # EFFECTIVE band: from p_mastery when present, else the CSV label
+    )
     best_score: Optional[float] = None
     score_trend: Optional[float] = None
+    p_mastery: Optional[float] = None  # BKT estimate; null = no evidence (cold start)
 
 
 class LearnerRow(BaseModel):
@@ -78,11 +82,6 @@ def _num(v) -> Optional[float]:
     return round(f, 4) if math.isfinite(f) else None
 
 
-def _band(v) -> str:
-    s = str(v).strip().lower() if v is not None and not pd.isna(v) else ""
-    return s if s in BANDS else "unknown"
-
-
 def build_heatmap(model: pd.DataFrame) -> Heatmap:
     df = model.dropna(subset=["learner_id", "topic"]).copy()
     topic_labels = df["topic"].astype(str).str.strip().str.casefold()
@@ -106,12 +105,19 @@ def build_heatmap(model: pd.DataFrame) -> Heatmap:
     rows: Dict[int, Dict[str, Cell]] = {}
     summary = {b: 0 for b in BANDS}
     for r in df.itertuples(index=False):
-        band = _band(r.mastery_level)
+        # Same rule the recommender uses (recommender/state.py::read_mastery): a
+        # finite p_mastery is binned at the 0.80 / 0.60 thresholds and wins over the
+        # categorical label; otherwise the label is used. One rule for dashboard
+        # and recommender, so they cannot disagree about a learner's band.
+        band, prob = read_mastery(
+            getattr(r, "mastery_level", None), getattr(r, MASTERY_PROB_COLUMN, None)
+        )
         summary[band] += 1
         rows.setdefault(int(r.learner_id), {})[str(r.topic)] = Cell(
             mastery_level=band,
             best_score=_num(getattr(r, "best_score", None)),
             score_trend=_num(getattr(r, "score_trend", None)),
+            p_mastery=_num(prob),
         )
     learners = [LearnerRow(learner_id=k, topics=v) for k, v in sorted(rows.items())]
     return Heatmap(

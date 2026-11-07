@@ -1,7 +1,17 @@
-import pandas as pd
+from datetime import datetime, timezone
 from pathlib import Path
 
+import pandas as pd
+
 # Local imports
+from .bkt import (
+    MODEL_NAME,
+    MODEL_VERSION,
+    SOURCE_DATASET,
+    STATE_COLD_START,
+    STATE_ESTIMATED,
+    compute_bkt_state,
+)
 from .features import (
     extract_quiz_features,
     extract_event_features,
@@ -9,6 +19,20 @@ from .features import (
 )
 from .mastery import compute_score_trend, evaluate_topic_state
 from .temporal import truncate_frames
+
+# Cognitive-state columns (Technical Handoff Section 7, minimum additive extension).
+# They are APPENDED after last_activity on purpose: code and tests that write or
+# read learner_model rows positionally keep working, and mastery_level (required
+# by api/store.py::Store._load) is untouched.
+STATE_COLUMNS = [
+    "p_mastery",
+    "evidence_count",
+    "model_name",
+    "model_version",
+    "source_dataset",
+    "state_status",
+    "generated_at",
+]
 
 COLUMNS_ORDERED = [
     "learner_id",
@@ -27,7 +51,7 @@ COLUMNS_ORDERED = [
     "topic_completion_pct",
     "mastery_level",
     "last_activity",
-]
+] + STATE_COLUMNS
 
 
 def load_collector_frames(data_dir=None):
@@ -48,7 +72,13 @@ def load_collector_frames(data_dir=None):
 
 
 def build_learner_model_from_frames(
-    activities, events, quizzes, completions=None, as_of=None
+    activities,
+    events,
+    quizzes,
+    completions=None,
+    as_of=None,
+    bkt_params=None,
+    generated_at=None,
 ):
     """
     Pure function: collector frames in, learner model out. No file I/O, so an
@@ -56,6 +86,12 @@ def build_learner_model_from_frames(
 
     as_of: see learner_model.temporal.resolve_cutoff. Only data strictly before
            the cutoff is used. None (default) uses everything, exactly as before.
+    bkt_params: learner_model.bkt.BKTParams; None uses the fixed, uncalibrated
+           defaults documented in bkt.py.
+    generated_at: provenance stamp for the state columns. Left empty by default so
+           this function stays deterministic (snapshot == physically truncated
+           data, as tests/test_as_of.py asserts); build_learner_model() stamps the
+           wall-clock time when it writes the CSV.
     """
     if completions is None:
         completions = pd.DataFrame()
@@ -117,6 +153,20 @@ def build_learner_model_from_frames(
             model, completion_features, on=["learner_id", "topic"], how="left"
         )
 
+    # Cognitive state (BKT). `quizzes` is already truncated at as_of above, so
+    # attempts finished at/after the cutoff cannot reach p_mastery. Topics with
+    # no scored attempt get no BKT row -> p_mastery stays NaN (never 0.0).
+    bkt_state = compute_bkt_state(quizzes, activity_lookup, bkt_params)
+    model = model.merge(bkt_state, on=["learner_id", "topic"], how="left")
+    model["evidence_count"] = model["evidence_count"].fillna(0).astype(int)
+    model["state_status"] = [
+        STATE_ESTIMATED if n > 0 else STATE_COLD_START for n in model["evidence_count"]
+    ]
+    model["model_name"] = MODEL_NAME
+    model["model_version"] = MODEL_VERSION
+    model["source_dataset"] = SOURCE_DATASET
+    model["generated_at"] = generated_at
+
     # Clean up NaNs
     model["activity_views"] = model["activity_views"].fillna(0).astype(int)
     model["quiz_attempts"] = model["quiz_attempts"].fillna(0).astype(int)
@@ -169,8 +219,10 @@ def build_learner_model(data_dir=None, output_file=None, as_of=None):
         else Path(data_dir)
     )
     frames = load_collector_frames(data_dir)
-    model = build_learner_model_from_frames(*frames, as_of=as_of)
-
+    generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")  # UTC
+    model = build_learner_model_from_frames(
+        *frames, as_of=as_of, generated_at=generated_at
+    )
     if output_file is None:
         cutoff = model.attrs.get("as_of_unix")
         if cutoff is None:

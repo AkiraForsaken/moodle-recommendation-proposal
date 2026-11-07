@@ -19,6 +19,9 @@ from typing import Dict, List, Optional, Set
 import numpy as np
 import pandas as pd
 
+from learner_model.build_model import build_learner_model_from_frames
+from learner_model.temporal import truncate_frames
+
 from . import config
 from .state import LearnerState, TopicState, read_mastery
 
@@ -184,6 +187,20 @@ class RecommenderData:
         quiz_file = d / "quiz_attempts.csv"
         quizzes = pd.read_csv(quiz_file) if quiz_file.exists() else None
         return cls(catalog, learner_model, build_interactions(events, quizzes, catalog))
+
+    @classmethod
+    def from_moodle_frames(
+        cls, catalog, events, quizzes, completions=None, as_of=None
+    ):
+        """Build recommender state and interactions from the same time snapshot."""
+        events, quizzes, completions, _ = truncate_frames(
+            events, quizzes, completions, as_of
+        )
+        learner_model = build_learner_model_from_frames(
+            catalog, events, quizzes, completions
+        )
+        interactions = build_interactions(events, quizzes, catalog)
+        return cls(catalog, learner_model, interactions)
 
     @staticmethod
     def _prepare_catalog(df: pd.DataFrame) -> pd.DataFrame:
