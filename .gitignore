@@ -152,7 +152,7 @@ activemq-data/
 # Environments
 .env
 .envrc
-.venv
+.venv*
 env/
 venv/
 ENV/
@@ -226,3 +226,4 @@ directory_structure.py
 experiment/
 
 data/
+artifacts/

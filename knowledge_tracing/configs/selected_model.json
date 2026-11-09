@@ -1,0 +1,76 @@
+{
+  "selection_criterion": "highest validation AUC across evaluated architecture and seed checkpoints",
+  "evaluated_seeds": [42, 43, 44],
+  "selected_at": "2026-11-07",
+  "model_name": "akt",
+  "model_version": "akt-seed43-best-validation-auc",
+  "checkpoint": "knowledge_tracing/artifacts/akt/seed43/qid_model.ckpt",
+  "checkpoint_id": "akt-seed43-qid-model",
+  "mapping_sha256": {
+    "question_map": "27353c68809642075bc5d359ebb499b4bfb94b8a6890e0f385d1a04b3110def6",
+    "concept_map": "390c44ffbac772e880745f00af377dd4972546f22d6682b1b2491d387ff993ac"
+  },
+  "seed": 43,
+  "best_epoch": 25,
+  "validation_metrics": {
+    "auc": 0.8669654305511381,
+    "accuracy": 0.7973520670089165
+  },
+  "test_metrics": {
+    "auc": 0.859924656268831,
+    "accuracy": 0.8007878829042994,
+    "log_loss": 0.43503507229533267,
+    "brier_score": 0.1399365173518104
+  },
+  "model_comparison": [
+    {
+      "model_name": "akt",
+      "seed": 43,
+      "best_epoch": 25,
+      "validation_auc": 0.8669654305511381,
+      "validation_accuracy": 0.7973520670089165,
+      "test_auc": 0.859924656268831,
+      "test_accuracy": 0.8007878829042994,
+      "test_log_loss": 0.43503507229533267,
+      "test_brier_score": 0.1399365173518104
+    },
+    {
+      "model_name": "dkt",
+      "seed": 43,
+      "best_epoch": 14,
+      "validation_auc": 0.8607417746196606,
+      "validation_accuracy": 0.7950553904350176,
+      "test_auc": 0.855499183779014,
+      "test_accuracy": 0.7981389662432928,
+      "test_log_loss": 0.4388558471619035,
+      "test_brier_score": 0.1418435718278631
+    },
+    {
+      "model_name": "sakt",
+      "seed": 43,
+      "best_epoch": 13,
+      "validation_auc": 0.8511203186963681,
+      "validation_accuracy": 0.7866792758713861,
+      "test_auc": 0.8441241328625299,
+      "test_accuracy": 0.7855056713984921,
+      "test_log_loss": 0.4575008824148822,
+      "test_brier_score": 0.1489256403556743
+    }
+  ],
+  "model_config": {
+    "d_model": 64,
+    "n_blocks": 2,
+    "dropout": 0.2,
+    "d_ff": 128,
+    "kq_same": 1,
+    "final_fc_dim": 256,
+    "num_attn_heads": 4,
+    "separate_qa": false,
+    "l2": 1e-5
+  },
+  "training_seed": 43,
+  "best_validation_epoch": 25,
+  "pykt_toolkit_version": "0.0.38",
+  "torch_version": "2.14.1+cu130",
+  "decision": "AKT seed 43 has the highest validation AUC among all saved architecture/seed checkpoints. Held-out test metrics are reported for generalization only and were not used for model selection."
+}

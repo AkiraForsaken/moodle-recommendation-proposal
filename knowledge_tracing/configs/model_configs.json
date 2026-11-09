@@ -1,0 +1,46 @@
+{
+  "_note": "Initial modest hyperparameter configuration",
+  "dkt": {
+    "model_config": {
+      "emb_size": 128,
+      "dropout": 0.2
+    },
+    "training": {
+      "learning_rate": 0.001,
+      "batch_size": 64,
+      "num_epochs": 50
+    }
+  },
+  "sakt": {
+    "model_config": {
+      "seq_len": 200,
+      "emb_size": 64,
+      "num_attn_heads": 4,
+      "dropout": 0.2,
+      "num_en": 2
+    },
+    "training": {
+      "learning_rate": 0.001,
+      "batch_size": 64,
+      "num_epochs": 50
+    }
+  },
+  "akt": {
+    "model_config": {
+      "d_model": 64,
+      "n_blocks": 2,
+      "dropout": 0.2,
+      "d_ff": 128,
+      "kq_same": 1,
+      "final_fc_dim": 256,
+      "num_attn_heads": 4,
+      "separate_qa": false,
+      "l2": 1e-5
+    },
+    "training": {
+      "learning_rate": 0.0005,
+      "batch_size": 64,
+      "num_epochs": 50
+    }
+  }
+}

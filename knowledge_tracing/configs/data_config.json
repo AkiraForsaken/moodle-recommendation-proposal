@@ -1,0 +1,19 @@
+{
+  "english_kt": {
+    "dpath": "data/processed/pykt_english",
+    "num_q": 2189,
+    "num_c": 96,
+    "max_concepts": 1,
+    "input_type": ["questions", "concepts"],
+    "maxlen": 200,
+    "emb_path": "",
+    "train_valid_file": "train_valid_sequences.csv",
+    "test_file": "test_sequences.csv",
+    "folds": [0, 1],
+    "fold_meaning": {
+      "0": "train",
+      "1": "valid",
+      "-1": "test (separate file)"
+    }
+  }
+}
