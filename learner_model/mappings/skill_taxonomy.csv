@@ -1,0 +1,33 @@
+skill_id,skill_name,kc_dimension,taxonomy_status,taxonomy_source,mapping_version
+subskill:gram_routines,Grammar: Present Simple & Daily Habits,grammar,reviewed,Subskill Taxonomy Curriculum Map,1.0.0
+subskill:voc_routines,Vocabulary: Daily Activities & Morning Actions,vocabulary,reviewed,Subskill Taxonomy Curriculum Map,1.0.0
+subskill:read_routines,Reading: Daily Schedules & Timetables,reading,reviewed,Subskill Taxonomy Curriculum Map,1.0.0
+subskill:write_routines,Writing: Routine Sentences & Frequency Frames,writing,reviewed,Subskill Taxonomy Curriculum Map,1.0.0
+subskill:gram_professional,Grammar: Business Register & Professional Tenses,grammar,reviewed,Subskill Taxonomy Curriculum Map,1.0.0
+subskill:voc_professional,Vocabulary: Workplace & Formal Terminology,vocabulary,reviewed,Subskill Taxonomy Curriculum Map,1.0.0
+subskill:read_professional,Reading: Corporate Memos & Work Emails,reading,reviewed,Subskill Taxonomy Curriculum Map,1.0.0
+subskill:write_professional,Writing: Business Correspondence & Action Items,writing,reviewed,Subskill Taxonomy Curriculum Map,1.0.0
+subskill:gram_travel,Grammar: Directional Prepositions & Spatial Syntax,grammar,reviewed,Subskill Taxonomy Curriculum Map,1.0.0
+subskill:voc_travel,Vocabulary: Transit & Travel Terminal Terms,vocabulary,reviewed,Subskill Taxonomy Curriculum Map,1.0.0
+subskill:read_travel,Reading: Transit Maps & Travel Schedules,reading,reviewed,Subskill Taxonomy Curriculum Map,1.0.0
+subskill:write_travel,Writing: Travel Itineraries & Directional Guides,writing,reviewed,Subskill Taxonomy Curriculum Map,1.0.0
+subskill:gram_media,Grammar: Stance Modals & Expressive Verbs,grammar,reviewed,Subskill Taxonomy Curriculum Map,1.0.0
+subskill:voc_media,Vocabulary: Opinion Phrases & Media Terminology,vocabulary,reviewed,Subskill Taxonomy Curriculum Map,1.0.0
+subskill:read_media,Reading: Editorial Articles & Review Summaries,reading,reviewed,Subskill Taxonomy Curriculum Map,1.0.0
+subskill:write_media,Writing: Argumentative Frames & Short Reviews,writing,reviewed,Subskill Taxonomy Curriculum Map,1.0.0
+subskill:gram_food,Grammar: Quantifiers & Countable/Uncountable Nouns,grammar,reviewed,Subskill Taxonomy Curriculum Map,1.0.0
+subskill:voc_food,Vocabulary: Culinary & Restaurant Ordering Terms,vocabulary,reviewed,Subskill Taxonomy Curriculum Map,1.0.0
+subskill:read_food,Reading: Restaurant Menus & Dietary Labels,reading,reviewed,Subskill Taxonomy Curriculum Map,1.0.0
+subskill:write_food,Writing: Dining Requests & Food Feedback,writing,reviewed,Subskill Taxonomy Curriculum Map,1.0.0
+subskill:gram_shopping,Grammar: Comparatives & Price Modifiers,grammar,reviewed,Subskill Taxonomy Curriculum Map,1.0.0
+subskill:voc_shopping,Vocabulary: Retail Transactions & Financial Terms,vocabulary,reviewed,Subskill Taxonomy Curriculum Map,1.0.0
+subskill:read_shopping,Reading: Retail Signs & Discount Notices,reading,reviewed,Subskill Taxonomy Curriculum Map,1.0.0
+subskill:write_shopping,Writing: Purchase Inquiries & Price Comparisons,writing,reviewed,Subskill Taxonomy Curriculum Map,1.0.0
+subskill:gram_hobbies,Grammar: Frequency Adverbs & Adverbial Syntax,grammar,reviewed,Subskill Taxonomy Curriculum Map,1.0.0
+subskill:voc_hobbies,Vocabulary: Recreation Sports & Leisure Terms,vocabulary,reviewed,Subskill Taxonomy Curriculum Map,1.0.0
+subskill:read_hobbies,Reading: Event Invitations & Leisure Schedules,reading,reviewed,Subskill Taxonomy Curriculum Map,1.0.0
+subskill:write_hobbies,Writing: Hobby Descriptions & Activity Posts,writing,reviewed,Subskill Taxonomy Curriculum Map,1.0.0
+subskill:gram_health,Grammar: Imperatives & Advice Modals,grammar,reviewed,Subskill Taxonomy Curriculum Map,1.0.0
+subskill:voc_health,Vocabulary: Medical Symptoms & Health Terminology,vocabulary,reviewed,Subskill Taxonomy Curriculum Map,1.0.0
+subskill:read_health,Reading: Prescriptions & Medical Label Directions,reading,reviewed,Subskill Taxonomy Curriculum Map,1.0.0
+subskill:write_health,Writing: Wellness Advice & Symptom Summaries,writing,reviewed,Subskill Taxonomy Curriculum Map,1.0.0

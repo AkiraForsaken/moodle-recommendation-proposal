@@ -10,7 +10,13 @@ from pathlib import Path
 
 import numpy as np
 
-from kt_common import CONFIG_DIR, EMB_TYPE, PROJECT_ROOT, load_data_config
+from kt_common import (
+    DATASET_NAME,
+    EMB_TYPE,
+    PROJECT_ROOT,
+    load_data_config,
+    selected_model_path,
+)
 
 
 def sha256_file(path: Path) -> str:
@@ -22,7 +28,7 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def load_selected_model(device: str | None = None):
+def load_selected_model(device: str | None = None, dataset_name: str = DATASET_NAME):
     """Load model, checkpoint, and selection metadata without training."""
     try:
         import torch
@@ -43,7 +49,7 @@ def load_selected_model(device: str | None = None):
             ) from exc
         raise
 
-    selection_path = CONFIG_DIR / "selected_model.json"
+    selection_path = selected_model_path(dataset_name)
     if not selection_path.exists():
         raise FileNotFoundError(f"Selected model config not found: {selection_path}")
     selection = json.loads(selection_path.read_text(encoding="utf-8"))
@@ -60,9 +66,13 @@ def load_selected_model(device: str | None = None):
             f"found {runtime_pykt_version}"
         )
 
+    data_config = load_data_config(dataset_name)
+    mapping_dir = Path(
+        data_config.get("mapping_dir", PROJECT_ROOT / "data/processed")
+    )
     mapping_paths = {
-        "question_map": PROJECT_ROOT / "data/processed/question_map.csv",
-        "concept_map": PROJECT_ROOT / "data/processed/concept_map.csv",
+        "question_map": mapping_dir / "question_map.csv",
+        "concept_map": mapping_dir / "concept_map.csv",
     }
     expected_mapping_hashes = selection.get("mapping_sha256", {})
     for mapping_name, mapping_path in mapping_paths.items():
@@ -78,7 +88,6 @@ def load_selected_model(device: str | None = None):
     checkpoint = (PROJECT_ROOT / selection["checkpoint"]).resolve()
     if not checkpoint.is_file():
         raise FileNotFoundError(f"Selected checkpoint not found: {checkpoint}")
-    data_config = load_data_config()
     model = init_model("akt", selection["model_config"], data_config, EMB_TYPE)
     target_device = device or ("cuda" if torch.cuda.is_available() else "cpu")
     try:

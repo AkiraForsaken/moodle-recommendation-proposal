@@ -14,7 +14,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from inference import load_selected_model, score_akt_questions, sha256_file
-from kt_common import PROJECT_ROOT, load_data_config
+from kt_common import DATASET_NAME, PROJECT_ROOT, load_data_config
 
 DEFAULT_INPUT = PROJECT_ROOT / "data/raw/english_learning_events.csv"
 PROCESSED_DIR = PROJECT_ROOT / "data/processed"
@@ -93,6 +93,47 @@ def choose_representative_questions(
             group = group.iloc[positions]
         selected.append(group)
     return pd.concat(selected, ignore_index=True)
+
+
+def load_training_question_ids(data_config: dict) -> set[int]:
+    """Return question indices with at least one interaction in the train fold."""
+    data_dir = Path(data_config["dpath"])
+    train_path = data_dir / data_config["train_valid_file"]
+    if not train_path.is_file():
+        raise FileNotFoundError(f"pyKT training sequences not found: {train_path}")
+    sequences = pd.read_csv(train_path, usecols=["fold", "questions"])
+    training_rows = sequences.loc[sequences["fold"].eq(0), "questions"]
+    question_ids = set()
+    for sequence in training_rows:
+        question_ids.update(
+            question_id
+            for question_id in (int(value) for value in str(sequence).split(","))
+            if question_id >= 0
+        )
+    if not question_ids:
+        raise ValueError(
+            f"No question interactions found in the train fold: {train_path}"
+        )
+    return question_ids
+
+
+def training_supported_questions(
+    question_map: pd.DataFrame,
+    concept_map: pd.DataFrame,
+    training_question_ids: set[int],
+) -> pd.DataFrame:
+    """Keep only trained items and reject KCs with no trained item support."""
+    supported = question_map[
+        question_map["questions"].isin(training_question_ids)
+    ].sort_values("questions").reset_index(drop=True)
+    unsupported_kcs = set(concept_map["kc_id"]) - set(supported["kc_id"])
+    if unsupported_kcs:
+        raise ValueError(
+            "Moodle KCs have no mapped question observed in the train fold: "
+            f"{sorted(unsupported_kcs)}. Add training evidence or remove these "
+            "KCs from the model's supported vocabulary."
+        )
+    return supported
 
 
 def validate_mappings(
@@ -510,7 +551,7 @@ def write_validation_report(
             "",
             f"- Mean absolute difference across all learner-KCs: {sensitivity_difference.mean():.4f}",
             f"- 95th percentile absolute difference: {sensitivity_difference.quantile(0.95):.4f}",
-            "- Primary predictions average over every mapped question in the KC. The deterministic 10-question estimate is retained separately as a sensitivity check from the same model scores.",
+            "- Primary predictions average over every inference-supported question in the KC. For Moodle, only questions observed in the train fold are scored because the model has no learned parameters for other questions. The deterministic 10-question estimate is retained separately as a sensitivity check from the same model scores.",
             "",
             "## Interpretation and Limitations",
             "",
@@ -532,6 +573,8 @@ def export_states(
     device: str | None = None,
     as_of: str | datetime | pd.Timestamp | None = None,
     show_progress: bool = True,
+    dataset_name: str = DATASET_NAME,
+    learner_roster_path: Path | None = None,
 ) -> pd.DataFrame:
     normalized_as_of = normalize_as_of(as_of)
 
@@ -549,16 +592,17 @@ def export_states(
             else " (no as_of cutoff)"
         )
     )
+    data_config = load_data_config(dataset_name)
+    processed_dir = Path(data_config.get("mapping_dir", PROCESSED_DIR))
     question_map = pd.read_csv(
-        PROCESSED_DIR / "question_map.csv", dtype={"item_id": str, "kc_id": str}
+        processed_dir / "question_map.csv", dtype={"item_id": str, "kc_id": str}
     )
     concept_map = pd.read_csv(
-        PROCESSED_DIR / "concept_map.csv", dtype={"kc_id": str, "kc_dimension": str}
+        processed_dir / "concept_map.csv", dtype={"kc_id": str, "kc_dimension": str}
     )
     assignments = pd.read_csv(
-        PROCESSED_DIR / "split_assignments.csv", dtype={"learner_id": str}
+        processed_dir / "split_assignments.csv", dtype={"learner_id": str}
     )
-    data_config = load_data_config()
     validate_mappings(question_map, concept_map, data_config)
     if "learner_id" not in assignments or assignments["learner_id"].isna().any():
         raise ValueError("split_assignments.csv must contain learner IDs")
@@ -569,11 +613,33 @@ def export_states(
     learner_ids = sorted(assignments["learner_id"].dropna().unique().tolist())
     if not learner_ids:
         raise ValueError("split_assignments.csv contains no learners")
+    if learner_roster_path is not None:
+        roster_path = Path(learner_roster_path)
+        if not roster_path.is_file():
+            raise FileNotFoundError(f"Learner roster does not exist: {roster_path}")
+        roster = pd.read_csv(roster_path, dtype={"learner_id": str})
+        if "learner_id" not in roster or roster["learner_id"].isna().any():
+            raise ValueError("Learner roster must have non-empty learner_id values")
+        if {"enrol_start_unix", "enrol_end_unix"}.issubset(roster.columns):
+            cutoff_epoch = (
+                int(pd.Timestamp(normalized_as_of).timestamp())
+                if normalized_as_of is not None
+                else int(pd.Timestamp.now(tz="UTC").timestamp())
+            )
+            start = pd.to_numeric(roster["enrol_start_unix"], errors="coerce").fillna(0)
+            end = pd.to_numeric(roster["enrol_end_unix"], errors="coerce").fillna(0)
+            active_at_cutoff = start.le(cutoff_epoch) & (
+                end.eq(0) | end.gt(cutoff_epoch)
+            )
+            roster = roster.loc[active_at_cutoff]
+        roster_ids = roster["learner_id"].dropna().astype(str).unique().tolist()
+        learner_ids = sorted(set(learner_ids) | set(roster_ids))
     if not set(events["learner_id"]) <= set(learner_ids):
         raise ValueError(
             "Source answer events contain learners missing from split_assignments.csv"
         )
-    learner_splits = assignments.set_index("learner_id")["split"]
+    learner_splits = assignments.set_index("learner_id")["split"].reindex(learner_ids)
+    learner_splits = learner_splits.fillna("inference_only")
     progress(
         f"Validated maps: {len(question_map):,} questions, "
         f"{len(concept_map):,} KCs, {len(learner_ids):,} assigned learners"
@@ -596,19 +662,27 @@ def export_states(
     if not events["kc_dimension"].eq(events["kc_id"].map(mapped_dimensions)).all():
         raise ValueError("Source KC dimensions differ from concept_map.csv")
 
+    all_questions = question_map.sort_values("questions").reset_index(drop=True)
+    if dataset_name == "moodle_kt":
+        all_questions = training_supported_questions(
+            question_map,
+            concept_map,
+            load_training_question_ids(data_config),
+        )
     sensitivity_questions = choose_representative_questions(
-        question_map, max_questions_per_kc
+        all_questions, max_questions_per_kc
     )
     sensitivity_question_ids = set(sensitivity_questions["questions"].astype(int))
-    all_questions = question_map.sort_values("questions").reset_index(drop=True)
     candidate_question_ids = all_questions["questions"].astype(int).tolist()
     candidate_concept_ids = all_questions["concepts"].astype(int).tolist()
     sensitivity_mask = all_questions["questions"].isin(sensitivity_question_ids)
     progress(
         f"Loading selected AKT checkpoint; scoring all "
-        f"{len(all_questions):,} mapped questions per learner"
+        f"{len(all_questions):,} supported questions per learner"
     )
-    model, target_device, selection, checkpoint_sha256 = load_selected_model(device)
+    model, target_device, selection, checkpoint_sha256 = load_selected_model(
+        device, dataset_name
+    )
     inference_timestamp = datetime.now(timezone.utc).isoformat()
     predictions = []
 
@@ -674,8 +748,19 @@ def export_states(
     model_metadata = {
         **selection,
         "checkpoint_sha256": checkpoint_sha256,
-        "aggregation_method": "arithmetic_mean_of_all_mapped_question_probabilities",
+        "aggregation_method": (
+            "arithmetic_mean_of_training_observed_question_probabilities"
+            if dataset_name == "moodle_kt"
+            else "arithmetic_mean_of_all_mapped_question_probabilities"
+        ),
     }
+    if "mapping_version" in events and not events.empty:
+        versions = events["mapping_version"].dropna().astype(str).unique()
+        if len(versions) != 1 or events["mapping_version"].isna().any():
+            raise ValueError(
+                "Moodle answer events must use exactly one complete question-mapping version"
+            )
+        model_metadata["mapping_version"] = versions[0]
     states = make_skill_state_frame(
         learner_ids,
         learner_splits,
@@ -686,12 +771,14 @@ def export_states(
         inference_timestamp,
         normalized_as_of,
     )
+    if "mapping_version" in model_metadata:
+        states["mapping_version"] = model_metadata["mapping_version"]
     issues = validate_states(states, events, learner_ids, concept_map)
     expected_prediction_counts = all_questions.groupby("kc_id").size()
     expected_prediction_counts = states["kc_id"].map(expected_prediction_counts)
     if not states["prediction_question_count"].eq(expected_prediction_counts).all():
         issues.append(
-            "Prediction-question counts do not match complete question-map coverage"
+            "Prediction-question counts do not match supported question-map coverage"
         )
     expected_sensitivity_counts = sensitivity_questions.groupby("kc_id").size()
     expected_sensitivity_counts = states["kc_id"].map(expected_sensitivity_counts)
@@ -705,8 +792,8 @@ def export_states(
     manifest_path = output_dir / "inference_manifest.json"
     report_path = output_dir / "knowledge_state_validation_report.md"
     mapping_hashes = {
-        "question_map": sha256_file(PROCESSED_DIR / "question_map.csv"),
-        "concept_map": sha256_file(PROCESSED_DIR / "concept_map.csv"),
+        "question_map": sha256_file(processed_dir / "question_map.csv"),
+        "concept_map": sha256_file(processed_dir / "concept_map.csv"),
     }
     progress("Validation passed; writing learner states and manifest")
     states.to_csv(states_path, index=False)
@@ -720,11 +807,17 @@ def export_states(
         "n_learners": len(learner_ids),
         "n_knowledge_components": int(len(concept_map)),
         "n_questions_scored_per_learner": int(len(all_questions)),
+        "n_mapped_questions_without_training_exposure": (
+            int(len(question_map) - len(all_questions))
+            if dataset_name == "moodle_kt"
+            else 0
+        ),
         "n_sensitivity_questions_per_kc": int(max_questions_per_kc),
         "n_sensitivity_questions": int(len(sensitivity_questions)),
         "aggregation_method": model_metadata["aggregation_method"],
         "data_config": data_config,
         "mapping_sha256": mapping_hashes,
+        "question_mapping_version": model_metadata.get("mapping_version"),
         "model": selection,
         "training_environment": {
             "pykt_toolkit_version": selection.get("pykt_toolkit_version"),
@@ -750,8 +843,14 @@ def export_states(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--input", type=Path, default=DEFAULT_INPUT)
-    parser.add_argument("--output-dir", type=Path, default=OUTPUT_DIR)
+    parser.add_argument("--input", type=Path, default=None)
+    parser.add_argument("--output-dir", type=Path, default=None)
+    parser.add_argument(
+        "--dataset-name",
+        choices=["english_kt", "moodle_kt"],
+        default="english_kt",
+    )
+    parser.add_argument("--learner-roster", type=Path, default=None)
     parser.add_argument(
         "--questions-per-kc",
         type=int,
@@ -768,6 +867,20 @@ def main() -> None:
     parser.add_argument("--device", choices=["cpu", "cuda"], default=None)
     parser.add_argument("--quiet", action="store_true", help="disable progress output")
     args = parser.parse_args()
+    if args.input is None:
+        args.input = (
+            DEFAULT_INPUT
+            if args.dataset_name == "english_kt"
+            else PROJECT_ROOT / "data/question_answer_events.csv"
+        )
+    if args.output_dir is None:
+        args.output_dir = (
+            OUTPUT_DIR
+            if args.dataset_name == "english_kt"
+            else PROJECT_ROOT / "knowledge_tracing/artifacts/moodle_kt/knowledge_states"
+        )
+    if args.dataset_name == "moodle_kt" and args.learner_roster is None:
+        args.learner_roster = PROJECT_ROOT / "data/learner_roster.csv"
     try:
         export_states(
             input_path=args.input,
@@ -777,6 +890,8 @@ def main() -> None:
             device=args.device,
             as_of=args.as_of,
             show_progress=not args.quiet,
+            dataset_name=args.dataset_name,
+            learner_roster_path=args.learner_roster,
         )
     except (FileNotFoundError, RuntimeError, ValueError) as exc:
         sys.exit(f"ERROR: {exc}")

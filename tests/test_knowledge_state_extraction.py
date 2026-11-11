@@ -11,8 +11,10 @@ import knowledge_tracing.inference as inference_module
 from knowledge_tracing.export_states import (
     choose_representative_questions,
     load_answer_events,
+    load_training_question_ids,
     make_skill_state_frame,
     normalize_as_of,
+    training_supported_questions,
     validate_mappings,
     validate_states,
 )
@@ -35,6 +37,47 @@ def test_representative_questions_are_evenly_spaced_and_deterministic():
     pd.testing.assert_frame_equal(
         selected, choose_representative_questions(question_map, 3)
     )
+
+
+def test_training_question_loader_ignores_validation_questions_and_padding(tmp_path):
+    train_sequences = tmp_path / "train_valid_sequences.csv"
+    pd.DataFrame(
+        {
+            "fold": [0, 1],
+            "questions": ["1,3,-1,-1", "2,3,-1,-1"],
+        }
+    ).to_csv(train_sequences, index=False)
+
+    question_ids = load_training_question_ids(
+        {"dpath": str(tmp_path), "train_valid_file": train_sequences.name}
+    )
+
+    assert question_ids == {1, 3}
+
+
+def test_moodle_inference_uses_only_training_supported_questions():
+    question_map = pd.DataFrame(
+        {
+            "item_id": ["Q1", "Q2", "Q3"],
+            "questions": [0, 1, 2],
+            "kc_id": ["KC1", "KC1", "KC2"],
+            "concepts": [0, 0, 1],
+            "kc_dimension": ["grammar", "grammar", "reading"],
+        }
+    )
+    concept_map = pd.DataFrame(
+        {
+            "kc_id": ["KC1", "KC2"],
+            "concepts": [0, 1],
+            "kc_dimension": ["grammar", "reading"],
+        }
+    )
+
+    supported = training_supported_questions(question_map, concept_map, {0, 2})
+
+    assert supported["item_id"].tolist() == ["Q1", "Q3"]
+    with pytest.raises(ValueError, match="no mapped question observed"):
+        training_supported_questions(question_map, concept_map, {0})
 
 
 def test_answer_loader_filters_nonanswers_and_preserves_event_order(tmp_path):
@@ -313,6 +356,14 @@ def test_export_states_writes_validated_dataset_and_manifest(tmp_path, monkeypat
     ).to_csv(
         processed_dir / "split_assignments.csv", index=False
     )
+    roster_path = tmp_path / "roster.csv"
+    pd.DataFrame(
+        {
+            "learner_id": ["L3"],
+            "enrol_start_unix": [0],
+            "enrol_end_unix": [0],
+        }
+    ).to_csv(roster_path, index=False)
     input_path = tmp_path / "events.csv"
     pd.DataFrame(
         [
@@ -343,12 +394,16 @@ def test_export_states_writes_validated_dataset_and_manifest(tmp_path, monkeypat
     monkeypatch.setattr(
         export_module,
         "load_data_config",
-        lambda: {"num_q": 3, "num_c": 2, "maxlen": 200},
+        lambda _dataset="english_kt": {
+            "num_q": 3,
+            "num_c": 2,
+            "maxlen": 200,
+        },
     )
     monkeypatch.setattr(
         export_module,
         "load_selected_model",
-        lambda _: (
+        lambda *_: (
             object(),
             "cpu",
             {
@@ -372,9 +427,10 @@ def test_export_states_writes_validated_dataset_and_manifest(tmp_path, monkeypat
         max_questions_per_kc=0,
         as_of="1970-01-01T00:03:20Z",
         show_progress=False,
+        learner_roster_path=roster_path,
     )
 
-    assert len(states) == 4
+    assert len(states) == 6
     assert (
         states.set_index(["learner_id", "kc_id"])
         .loc[("L1", "KC2"), "state_status"]
@@ -385,6 +441,10 @@ def test_export_states_writes_validated_dataset_and_manifest(tmp_path, monkeypat
     assert cold_learner["observed_accuracy"].isna().all()
     assert cold_learner["predicted_correctness"].notna().all()
     assert cold_learner["split"].eq("train").all()
+    roster_learner = states[states["learner_id"].eq("L3")]
+    assert roster_learner["split"].eq("inference_only").all()
+    assert roster_learner["state_status"].eq("cold_start").all()
+    assert roster_learner["predicted_correctness"].notna().all()
     assert (tmp_path / "outputs/learner_skill_state.csv").is_file()
     assert (tmp_path / "outputs/inference_manifest.json").is_file()
     manifest = json.loads(

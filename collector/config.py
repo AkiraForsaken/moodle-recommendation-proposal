@@ -37,6 +37,12 @@ INCLUDE_ROLES = os.getenv("MOODLE_INCLUDE_ROLES", "student")
 OUTPUT_DIR = Path(
     os.getenv("MOODLE_OUTPUT_DIR", Path(__file__).resolve().parent.parent / "data")
 )
+QUESTION_KC_MAPPING_FILE = Path(
+    os.getenv(
+        "MOODLE_QUESTION_KC_MAPPING",
+        OUTPUT_DIR / "moodle_question_kc_map.csv",
+    )
+)
 
 LOCAL_TZ = ZoneInfo(LOCAL_TZ_NAME)
 

@@ -1,0 +1,72 @@
+"""Column contracts for Milestone 4 outputs."""
+
+PROFILE_COLUMNS = [
+    "learner_id",
+    "profile_id",
+    "profile_version",
+    "generated_at",
+    "as_of",
+    "source_population",
+    "knowledge_status",
+    "skills_status",
+    "weak_areas_status",
+    "behavior_status",
+    "engagement_status",
+    "history_status",
+    "profile_completeness",
+]
+
+SKILL_SUMMARY_COLUMNS = [
+    "learner_id",
+    "skill_id",
+    "skill_name",
+    "kc_dimension",
+    "kc_count",
+    "estimated_kc_count",
+    "cold_start_kc_count",
+    "mean_predicted_correctness",
+    "mean_observed_accuracy",
+    "total_attempt_count",
+    "mapping_version",
+    "state_status",
+]
+
+WEAK_AREA_COLUMNS = [
+    "learner_id",
+    "entity_type",
+    "entity_id",
+    "entity_name",
+    "concern_status",
+    "observed_accuracy",
+    "predicted_correctness",
+    "evidence_count",
+    "reason",
+    "mapping_version",
+    "generated_at",
+]
+
+# TOPIC_STATE_COLUMNS = [
+#     "learner_id",
+#     "topic",
+#     "sequence_position",
+#     "activity_views",
+#     "lesson_sessions",
+#     "question_interactions",
+#     "quiz_attempts",
+#     "best_score",
+#     "latest_score",
+#     "score_trend",
+#     "quiz_time",
+#     "lesson_time_estimate",
+#     "completed_activities",
+#     "topic_completion_pct",
+#     "mastery_level",
+#     "last_activity",
+#     "p_mastery",
+#     "evidence_count",
+#     "model_name",
+#     "model_version",
+#     "source_dataset",
+#     "state_status",
+#     "generated_at",
+# ]

@@ -33,9 +33,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from kt_common import (
     ARTIFACTS_DIR,
     EMB_TYPE,
+    DATASET_NAME,
+    PROJECT_ROOT,
+    dataset_artifacts_dir,
     load_data_config,
     load_model_configs,
     make_dataset,
+    selected_model_path,
     set_seed,
 )
 
@@ -63,6 +67,7 @@ def train_one(
     epochs_override: int | None,
     data_cfg: dict,
     model_cfgs: dict,
+    dataset_name: str = DATASET_NAME,
 ) -> dict:
     import torch
     from torch.utils.data import DataLoader
@@ -73,7 +78,7 @@ def train_one(
     if epochs_override:
         tcfg["num_epochs"] = epochs_override
 
-    run_dir = ARTIFACTS_DIR / model_name / f"seed{seed}"
+    run_dir = dataset_artifacts_dir(dataset_name) / model_name / f"seed{seed}"
     run_dir.mkdir(parents=True, exist_ok=True)
 
     with open(run_dir / "train.log", "w") as logf, contextlib.redirect_stdout(
@@ -148,6 +153,7 @@ def main() -> None:
     )
     ap.add_argument("--models", nargs="+", default=SUPPORTED, choices=SUPPORTED)
     ap.add_argument("--seeds", nargs="+", type=int, default=[42])
+    ap.add_argument("--dataset-name", default=DATASET_NAME)
     ap.add_argument(
         "--epochs",
         type=int,
@@ -156,13 +162,58 @@ def main() -> None:
     )
     args = ap.parse_args()
 
-    data_cfg = load_data_config()
+    data_cfg = load_data_config(args.dataset_name)
     model_cfgs = load_model_configs()
     rows = [
-        train_one(m, s, args.epochs, data_cfg, model_cfgs)
+        train_one(m, s, args.epochs, data_cfg, model_cfgs, args.dataset_name)
         for m in args.models
         for s in args.seeds
     ]
+
+    if args.dataset_name != DATASET_NAME:
+        akt_rows = [row for row in rows if row["model"] == "akt"]
+        if not akt_rows:
+            print("AKT was not trained; no inference checkpoint selection was written.")
+            selected = None
+        else:
+            selected = max(akt_rows, key=lambda row: row["valid_auc"])
+    else:
+        selected = None
+    if selected is not None:
+        run_dir = (
+            dataset_artifacts_dir(args.dataset_name)
+            / selected["model"]
+            / f"seed{selected['seed']}"
+        )
+        mapping_dir = Path(data_cfg["mapping_dir"])
+        from inference import sha256_file
+
+        selection = {
+            "selection_criterion": "highest validation AUC; held-out test is not used for selection",
+            "model_name": selected["model"],
+            "model_version": (
+                f"{args.dataset_name}-{selected['model']}-seed{selected['seed']}"
+            ),
+            "checkpoint": str(run_dir.joinpath(f"{EMB_TYPE}_model.ckpt").resolve().relative_to(PROJECT_ROOT)),
+            "checkpoint_id": f"{args.dataset_name}-{selected['model']}-seed{selected['seed']}",
+            "mapping_sha256": {
+                name: sha256_file(mapping_dir / f"{name}.csv")
+                for name in ("question_map", "concept_map")
+            },
+            "seed": selected["seed"],
+            "best_epoch": selected["best_epoch"],
+            "validation_metrics": {
+                "auc": selected["valid_auc"],
+                "accuracy": selected["valid_acc"],
+            },
+            "model_config": selected["model_config"],
+            "pykt_toolkit_version": selected["pykt_toolkit_version"],
+            "torch_version": selected["torch_version"],
+        }
+        selected_model_path(args.dataset_name).write_text(
+            json.dumps(selection, indent=2) + "\n", encoding="utf-8"
+        )
+        print(f"Selected model written to {selected_model_path(args.dataset_name)}")
 
     print("\n" + "=" * 60 + "\nTRAINING SUMMARY (validation fold only)\n" + "=" * 60)
     for r in rows:

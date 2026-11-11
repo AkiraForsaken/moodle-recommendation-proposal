@@ -1,23 +1,9 @@
-"""
-Learner Model Module
-Transforms raw Moodle analytics into a structured state representation.
-"""
+"""Population-separated learner modeling pipeline."""
 
-import argparse
-
-from .build_model import build_learner_model
-
-__all__ = ["build_learner_model", "main"]
+__all__ = ["main"]
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Build the learner model from Moodle collector CSVs."
-    )
-    parser.add_argument("--data-dir", help="folder holding the collector CSVs")
-    parser.add_argument(
-        "--output", help="output CSV (default: <data-dir>/learner_model.csv)"
-    )
-    args = parser.parse_args()
+    from .builder import main as builder_main
 
-    build_learner_model(data_dir=args.data_dir, output_file=args.output)
+    return builder_main()

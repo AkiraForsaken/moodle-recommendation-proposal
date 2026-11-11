@@ -2,14 +2,22 @@
 Moodle data collector for the Learner Model v1 pipeline.
 
 Outputs (written to ../data relative to this package):
+    learner_roster.csv             active enrolled participants, including new learners
     activity_catalog.csv        course modules -> topic + sequence
     learning_events.csv         filtered, context-resolved, session-tagged events
     learning_sessions.csv       one row per continuous learning session
     quiz_attempts.csv           finished non-preview attempts, normalized + duration
+    question_answer_events.csv  graded item responses with explicit item -> KC mapping
+    question_answer_mapping_report.csv mapped / unmapped KT response counts
     course_modules_completion.csv   activity completion states (may be empty)
 
 Design notes relevant to the thesis:
   * No quiz IDs are hard-coded. Topics come from Moodle course sections.
+  * Question responses use one row per completed, graded item attempt. A
+    versioned question-bank-entry-to-KC crosswalk is required; unmapped rows
+    are counted and excluded rather than guessed from labels.
+  * Partial credit is retained as a raw fraction and converted to binary
+    correctness only at full credit for the KT event stream.
   * Events are selected from a documented whitelist and classified into
     behavioural categories (events.py), so "question interactions" are
     countable separately from ordinary page/quiz views.
@@ -35,6 +43,10 @@ from .collect_activities import collect_activity_catalog
 from .collect_completion import collect_course_modules_completion
 from .collect_events import collect_learning_events
 from .collect_quizzes import collect_quiz_attempts
+from .collect_question_answers import (
+    collect_learner_roster,
+    collect_question_answer_events,
+)
 from .config import (
     DB_HOST,
     DB_NAME,
@@ -64,6 +76,9 @@ def run_collection(cursor):
     print("\nResolving participants...")
     user_filter, _ = resolve_participants(cursor, course_id)
 
+    print("\nCollecting enrolled learner roster...")
+    collect_learner_roster(cursor, course_id, user_filter)
+
     print("\nCollecting activity catalog...")
     catalog_rows = collect_activity_catalog(cursor, course_id)
 
@@ -72,6 +87,9 @@ def run_collection(cursor):
 
     print("\nCollecting quiz attempts...")
     collect_quiz_attempts(cursor, course_id, catalog_rows, user_filter)
+
+    print("\nCollecting scored question-answer events...")
+    collect_question_answer_events(cursor, course_id, user_filter)
 
     print("\nCollecting activity completion...")
     collect_course_modules_completion(cursor, course_id, catalog_rows, user_filter)
