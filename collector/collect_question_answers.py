@@ -1,6 +1,7 @@
 """Export scored Moodle question attempts in the knowledge-tracing event format."""
 
 import csv
+import json
 import math
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -29,6 +30,13 @@ ANSWER_EVENT_COLUMNS = [
     "mapping_source",
 ]
 ROSTER_COLUMNS = ["learner_id", "course_id", "enrol_start_unix", "enrol_end_unix"]
+# Accounts created by `python -m moodle_setup simulate-learners` carry this
+# ID-number prefix. An export that contains any of them is labelled simulated.
+SIMULATED_IDNUMBER_PREFIX = "SIM-"
+SIMULATION_MANIFEST_NAME = "simulation_manifest.json"
+# Written by `moodle_setup simulate-learners`: the attempt plan's manifest,
+# including the generator's ceiling AUC that `knowledge_engine train` reports.
+PLAN_MANIFEST_NAME = "simulation_plan_manifest.json"
 MAPPING_REPORT_COLUMNS = [
     "status",
     "total_scored_question_attempts",
@@ -95,32 +103,75 @@ def load_question_kc_mapping(path=QUESTION_KC_MAPPING_FILE):
 
 
 def collect_learner_roster(cursor, course_id, user_filter):
-    """Return active enrolled users, including learners without activity yet."""
+    """Return active enrolled users, including learners without activity yet.
+
+    Also labels the export: if any enrolled learner is a simulated account,
+    ``simulation_manifest.json`` is written next to the CSVs (and a stale one
+    is removed otherwise), so downstream outputs say ``simulated`` and are
+    never mistaken for real learners. A mixed cohort is labelled simulated.
+    """
     cursor.execute(
         f"""
-        SELECT DISTINCT ue.userid, ue.timestart, ue.timeend
+        SELECT DISTINCT ue.userid, ue.timestart, ue.timeend, u.idnumber
         FROM {t('user_enrolments')} ue
         JOIN {t('enrol')} e ON e.id = ue.enrolid
+        JOIN {t('user')} u ON u.id = ue.userid
         WHERE e.courseid = ?
           AND e.status = 0
           AND ue.status = 0
+          AND u.deleted = 0
         ORDER BY ue.userid
         """,
         (course_id,),
     )
-    rows = [
-        {
-            "learner_id": str(user_id),
-            "course_id": course_id,
-            "enrol_start_unix": int(start_time or 0),
-            "enrol_end_unix": int(end_time or 0),
-        }
-        for user_id, start_time, end_time in cursor.fetchall()
-        if user_filter is None or user_id in user_filter
-    ]
+    rows, simulated = [], 0
+    for user_id, start_time, end_time, idnumber in cursor.fetchall():
+        if user_filter is not None and user_id not in user_filter:
+            continue
+        simulated += str(idnumber or "").startswith(SIMULATED_IDNUMBER_PREFIX)
+        rows.append(
+            {
+                "learner_id": str(user_id),
+                "course_id": course_id,
+                "enrol_start_unix": int(start_time or 0),
+                "enrol_end_unix": int(end_time or 0),
+            }
+        )
     learner_ids = [row["learner_id"] for row in rows]
     write_csv("learner_roster.csv", rows, ROSTER_COLUMNS)
+    _label_simulated_export(simulated, len(rows))
     return learner_ids
+
+
+def _label_simulated_export(simulated_learners, total_learners):
+    marker = OUTPUT_DIR / SIMULATION_MANIFEST_NAME
+    if not simulated_learners:
+        marker.unlink(missing_ok=True)
+        # The simulated learners were removed: their plan no longer describes the data.
+        (OUTPUT_DIR / PLAN_MANIFEST_NAME).unlink(missing_ok=True)
+        return
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    marker.write_text(
+        json.dumps(
+            {
+                "simulated": True,
+                "source": "Moodle accounts with a SIM- ID number (moodle_setup simulate-learners)",
+                "simulated_learners": simulated_learners,
+                "real_learners": total_learners - simulated_learners,
+                "warning": (
+                    "This export contains simulated learners. Results describe the "
+                    "simulator, not real learners, and are not validity evidence."
+                ),
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    print(
+        f"NOTE: {simulated_learners} of {total_learners} enrolled learners are simulated; "
+        "this export is labelled 'simulated'."
+    )
 
 
 def _read_scored_question_attempts(cursor, course_id):
@@ -241,9 +292,11 @@ def collect_question_answer_events(
                 f"{question_attempt_id}"
             )
         event_time = int(graded_time)
+        # Moodle stores -1 as the first-step time of a question that was never
+        # shown on screen; that is not a time, so no response time is derived.
         response_time = (
             max(0, event_time - int(first_time))
-            if first_time is not None
+            if first_time is not None and int(first_time) > 0
             else None
         )
         mapped_by_learner[str(learner_id)].append(

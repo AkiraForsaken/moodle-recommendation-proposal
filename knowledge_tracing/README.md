@@ -1,4 +1,19 @@
-# Knowledge-state extraction
+# Knowledge tracing toolkit
+
+This package is the offline deep-KT toolkit (pyKT). It serves two separate
+purposes that must not be confused:
+
+| Dataset name | Purpose                                                                                                                                                                     | Feeds the Moodle learner model?                                                            |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `english_kt` | **Benchmark experiment.** Compares DKT / AKT / SAKT against baselines on the public English Learning Events dataset. Its results justify the choice of model in the thesis. | **No.** Its checkpoints, KC IDs and `learner_skill_state.csv` are experiment outputs only. |
+| `moodle_kt`  | **Course model.** The same pipeline trained on a Moodle course's own answers (or on simulated answers for that course).                                                     | Yes, but only through `knowledge_engine`, after its promotion gate.                        |
+
+A KT model depends on the items and KCs it was trained on, so a benchmark
+checkpoint cannot score a Moodle course, and benchmark learners are not Moodle
+learners. Nothing under `learner_model/` or `knowledge_engine/` reads the
+benchmark files.
+
+# Benchmark knowledge-state extraction
 
 The extractor loads the selected AKT checkpoint and produces one record per
 learner and Knowledge Component. It preserves observed accuracy separately
@@ -58,47 +73,28 @@ AKT seed 43 is selected by validation AUC across the saved architecture/seed
 runs. It reached validation AUC `0.86697` at epoch 25. Its held-out test metrics
 are recorded for generalization reporting only and were not used for selection.
 
-## Moodle English-course data
+## Course (Moodle) data
 
-The Moodle collector can export graded item responses to
-`data/question_answer_events.csv`. Before using the export, create
-`data/moodle_question_kc_map.csv` with one reviewed row per Moodle question-bank
-entry and these columns:
-
-```text
-question_bank_entry_id,kc_id,kc_dimension,mapping_version,mapping_source
-```
-
-The stable question-bank entry ID is distinct from a quiz slot. Unmapped graded
-responses are counted in `data/question_answer_mapping_report.csv` and excluded
-from the KT CSV. `correct` is 1 only for full credit; the raw Moodle fraction is
-preserved. The collector also exports active enrolled users in
-`data/learner_roster.csv`, including users with no question responses.
-
-Train a separate model from the Moodle cohort, using the existing pipeline and
-the curated taxonomy. The Moodle maps, processed sequences, checkpoints,
-selection metadata, and knowledge-state outputs use separate paths; benchmark
-artifacts are not overwritten.
+Do not run these scripts by hand for a course. `knowledge_engine` drives them,
+checks that enough answers exist, and decides whether the trained model may
+replace the Phase 1 estimator:
 
 ```bash
-python knowledge_tracing/prepare_data.py \
-  --dataset-name moodle_kt \
-  --input data/question_answer_events.csv \
-  --question-mapping data/moodle_question_kc_map.csv
-python knowledge_tracing/init_pykt_dataset.py \
-  --dataset-name moodle_kt \
-  --input data/processed/moodle_kt/pykt_formatted_sequences.csv \
-  --output-dir data/processed/pykt_moodle
-python knowledge_tracing/train.py --dataset-name moodle_kt --models akt --seeds 42 43 44
-python knowledge_tracing/evaluate.py --dataset-name moodle_kt --models akt
-python knowledge_tracing/export_states.py --dataset-name moodle_kt
-python -m learner_model.builder
+python -m knowledge_engine status     # readiness and the active estimator
+python -m knowledge_engine train      # prepare -> train -> evaluate -> gate
+python -m knowledge_engine estimate   # learner-by-KC states for the learner model
 ```
 
-Moodle KT requires at least three learners with answer events for distinct
-train, validation, and test folds. The ability to estimate trustworthy
-generalization metrics depends on a substantially larger cohort and sufficient
-outcome variation in each split. A roster-only learner receives the model's
-empty-history prediction per KC, marked `cold_start`; it is a population prior,
-not personal evidence or mastery. Profiles keep benchmark learners and Moodle
-learners in separate source populations.
+Inputs come from the Moodle collector: `question_answer_events.csv`,
+`learner_roster.csv`, and the question-to-KC mapping
+`moodle_question_kc_map.csv`, which the collector derives from the course's
+question categories. `correct` is 1 only for full credit; the raw Moodle
+fraction is preserved. Unmapped graded responses are counted in
+`question_answer_mapping_report.csv` and excluded.
+
+The course maps, processed sequences, checkpoints and selection metadata use
+separate paths (`data/processed/moodle_kt`, `artifacts/moodle_kt`,
+`configs/moodle_kt_selected_model.json`); benchmark artifacts are not
+overwritten. Training needs at least three learners with answers for distinct
+train, validation and test folds, and far more for trustworthy metrics; the
+readiness thresholds live in `knowledge_engine/config.py`.

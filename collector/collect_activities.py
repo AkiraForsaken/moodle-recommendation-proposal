@@ -1,4 +1,4 @@
-"""Step 1 - activity catalog: course modules -> topic + sequence."""
+"""Step 1 - activity catalog: course modules -> topic + sequence (+ ID number)."""
 
 from .config import t
 from .db import write_csv
@@ -27,7 +27,8 @@ def collect_activity_catalog(cursor, course_id):
                 ELSE NULL
             END AS activity_name,
             cm.visible,
-            cm.completion
+            cm.completion,
+            cm.idnumber
         FROM {t('course_modules')} cm
         JOIN {t('modules')} m ON m.id = cm.module
         JOIN {t('course_sections')} cs ON cs.id = cm.section
@@ -54,6 +55,7 @@ def collect_activity_catalog(cursor, course_id):
             name,
             visible,
             completion,
+            idnumber,
         ) = row
         rows.append(
             {
@@ -67,6 +69,9 @@ def collect_activity_catalog(cursor, course_id):
                 "sequence": i,
                 "visible": visible,
                 "completion_tracking": completion,
+                # Course-module ID number. A lesson page whose ID number is a
+                # kc_id teaches that KC (see collect_course_mappings.py).
+                "idnumber": (idnumber or "").strip(),
             }
         )
 
@@ -84,6 +89,7 @@ def collect_activity_catalog(cursor, course_id):
             "sequence",
             "visible",
             "completion_tracking",
+            "idnumber",
         ],
     )
     return rows

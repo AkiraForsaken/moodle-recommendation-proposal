@@ -1,0 +1,49 @@
+KC025 | Which sentence is a correct health instruction? | Take one tablet after meals. | You taking one tablet after meals. | Takes one tablet after meals. | To taking one tablet after meals.
+KC025 | Choose the correct form: "___ plenty of water during the day." | Drink | Drinks | Drinking | To drinks
+KC025 | Which is a correct negative instruction? | Don't take this medicine on an empty stomach. | Not take this medicine on an empty stomach. | Doesn't take this medicine on an empty stomach. | No taking you this medicine.
+KC025 | Choose the correct form: "___ in bed and rest for two days." | Stay | Stays | Staying | Stayed
+KC026 | Choose the correct form: "You ___ see a doctor about that cough." | should | should to | had better to | ought
+KC026 | Choose the correct form: "You ___ better rest today." | had | have | should | would to
+KC026 | Which sentence gives advice correctly? | You shouldn't go to work with a fever. | You shouldn't to go to work with a fever. | You don't should go to work with a fever. | You shouldn't going to work with a fever.
+KC026 | Which sentence is correct? | You'd better not skip your medication. | You'd better don't skip your medication. | You'd not better skip your medication. | You'd better to not skip your medication.
+KC027 | Choose the correct form: "If you ___ a headache, take a painkiller." | have | will have | had | having
+KC027 | Choose the correct form: "If the pain continues, I ___ the doctor." | will call | call yesterday | called | would called
+KC027 | Which sentence is a correct first conditional? | If you rest, you will feel better. | If you will rest, you feel better. | If you rested, you will feel better. | If you rest, you felt better.
+KC027 | Choose the correct form: "You will get dehydrated if you ___ enough water." | don't drink | won't drink | didn't drank | not drink
+KC028 | Choose the correct word: "Take two ___ of syrup every six hours." | spoonfuls | many | much | little
+KC028 | Choose the correct word: "How ___ tablets should I take?" | many | much | little | any of
+KC028 | Choose the correct word: "Drink ___ water with this medicine - at least a full glass." | plenty of | a few | many | several
+KC028 | Choose the correct phrase: "Apply ___ cream to the affected area." | a little | a few | many | several
+KC047 | A pain in your head is a ___. | headache | fever | rash | cough
+KC047 | A body temperature that is higher than normal is a ___. | fever | bruise | sprain | cramp
+KC047 | The feeling that you are going to vomit is called ___. | nausea | dizziness | fatigue | a sore throat
+KC047 | Which word describes extreme tiredness? | fatigue | nausea | fever | rash
+KC047 | Pain when you swallow is usually a ___. | sore throat | stomach ache | backache | toothache
+KC048 | Which instrument measures body temperature? | A thermometer | A bandage | A syringe | A stethoscope
+KC048 | What is a "prescription"? | A doctor's written order for medicine | A type of bandage | A hospital bed | A medical bill
+KC048 | What do you use to cover a small cut? | A plaster or bandage | A thermometer | A prescription | A tablet
+KC048 | Where do you collect prescribed medicine? | At a pharmacy | At a gym | At a laboratory only | At a waiting room
+KC070 | Read the label: "Take 1 tablet twice daily with food." How many tablets should you take per day? | Two | One | Three | Four
+KC070 | Read the label: "Take 2 capsules every 8 hours. Do not exceed 6 capsules in 24 hours." What is the maximum number in one day? | Six | Two | Eight | Twenty-four
+KC070 | Read the label: "Take 1 tablet twice daily with food." When should you take the tablet? | When you eat | Before sleeping only | On an empty stomach | Once a week
+KC070 | Read the label: "Children 6-12 years: 5 ml every 6 hours. Not for children under 6." Can a 4-year-old take this medicine? | No | Yes, 5 ml | Yes, 2.5 ml | Yes, every 6 hours
+KC071 | Read the warning: "May cause drowsiness. Do not drive or operate machinery." What should you avoid? | Driving | Eating | Sleeping | Drinking water
+KC071 | Read the warning: "Possible side effects: nausea, dry mouth. If symptoms persist, consult your doctor." Which is a possible side effect? | Dry mouth | Fever | Hair loss | Hearing loss
+KC071 | Read the warning: "Keep out of reach of children. Store below 25°C." Where should you keep this medicine? | In a cool place children cannot reach | On a sunny windowsill | In a child's bedroom | In a hot car
+KC071 | Read the warning: "Do not use after the expiry date. Do not take with alcohol." What must you not combine with this medicine? | Alcohol | Water | Food | Sleep
+KC072 | Read the article: "Adults should aim for 7-9 hours of sleep and avoid screens for an hour before bed." What does the article recommend before bed? | Avoiding screens | Watching TV | Drinking coffee | Exercising hard
+KC072 | Read the article: "Walking 30 minutes a day lowers the risk of heart disease. Even short walks help." What is the main recommendation? | Walk every day | Run a marathon | Avoid all exercise | Walk only at weekends
+KC072 | Read the article: "Wash your hands for 20 seconds with soap, especially before eating." How long should you wash your hands? | 20 seconds | 5 seconds | 2 minutes | 1 hour
+KC072 | Read the article: "Drink water regularly; thirst is a late sign of dehydration." What does the article suggest? | Drink before you feel thirsty | Drink only when very thirsty | Avoid water at meals | Replace water with coffee
+KC094 | Which sentence describes symptoms clearly for an intake form? | I have had a sore throat and a mild fever for three days. | I feel bad in some ways. | Throat. Fever. | Not good since some time.
+KC094 | Which sentence gives the most useful detail? | The pain is in my lower back and gets worse when I sit. | My back, you know. | It hurts a lot somewhere. | Pain is bad.
+KC094 | Choose the correct sentence. | I have been coughing since Monday. | I am coughing since Monday. | I cough since Monday. | I have coughing since Monday.
+KC094 | Which sentence states how long the symptoms have lasted? | The headaches started two weeks ago. | I get headaches. | Headaches are painful. | My head is on my shoulders.
+KC095 | Which sentence fits a wellness plan? | You should drink eight glasses of water a day. | Water is wet. | You drinks eight glasses. | Eight glasses are on the table.
+KC095 | Choose the best plan item. | Try to walk for 30 minutes every morning. | Walking is a kind of moving. | Morning is early. | Try walk to 30 minute.
+KC095 | Which sentence uses an advisory structure correctly? | It is a good idea to stretch before exercising. | It is a good idea stretch before exercise. | Good idea is stretching to before. | It is good idea to stretching.
+KC095 | Which list is a clear daily routine? | 7:00 drink water; 7:15 stretch; 12:30 healthy lunch; 22:00 sleep | Water, sometimes; stretch, maybe | Do healthy things all day | Sleep, lunch, stretch, water, in any order
+KC096 | Which sentence best opens an appointment request? | I would like to book an appointment with Dr Lee next week. | I want doctor. | Give me an appointment now. | Dr Lee, when?
+KC096 | Which sentence states availability politely? | I am available on Tuesday or Thursday morning, if possible. | Only Tuesday, nothing else. | Whenever, I don't care. | You choose, hurry.
+KC096 | Complete the request: "Could you please ___ me know the earliest available time?" | let | letting | to let | lets
+KC096 | Choose the best closing for an appointment email. | Thank you for your help; I look forward to your confirmation. | That's it. | Reply fast. | See you, doc!

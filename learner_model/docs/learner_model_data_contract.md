@@ -1,101 +1,79 @@
-# Complete learner-model data contract
+# Learner-model data contract
 
-## Population boundaries
+## Inputs
 
-The initial build produces separate profiles for:
+| Input | Source | Required |
+|---|---|---|
+| `learner_roster.csv` | Moodle collector | no (recommended: lets new learners get profiles) |
+| `activity_catalog.csv`, `learning_events.csv`, `quiz_attempts.csv`, `course_modules_completion.csv` | Moodle collector | no (a missing file is an empty table) |
+| `kc_catalog.csv`, `kc_topic_map.csv` | Moodle collector (question categories and quiz usage) | no (needed for KC names and skills) |
+| `learner_kc_state.csv` | `knowledge_engine` | no (knowledge is `unavailable` without it) |
 
-- `english_learning_events`: the English benchmark knowledge-state population.
-- `moodle_collector`: learners observed in the local Moodle collector files.
+The learner model reads the knowledge-state file as a contract. It does not
+import `knowledge_engine` or `knowledge_tracing`, and does not know which
+estimator produced the rows. No benchmark file is read.
 
-The same identifier text in these populations does not imply the same person.
-The profile key therefore includes `source_population`; this build never joins
-the populations. Moodle behavior, engagement, and history are unavailable in
-English profiles. English KC knowledge, skills, and weak areas are unavailable
-in Moodle profiles.
+## One population per build
 
-When Moodle-specific KT states are available, they are joined to Moodle
-behavior, engagement, and history using Moodle learner IDs only. The
-`learner_roster.csv` export includes active enrolled users with no activity so
-new learners can still receive profiles. Empty-history Moodle predictions are
-marked `cold_start` and are model priors, not personal evidence, observed
-performance, or mastery. Without a Moodle-trained KT model, Moodle knowledge
-remains `unavailable`.
+Every output row carries `source_population`:
 
-## Knowledge semantics and cutoff
+- `moodle_collector`: real learners from the Moodle collector.
+- `simulated`: the data directory contains `simulation_manifest.json`.
 
-`learner_kc_state.csv` retains the Milestone 3 source rows and provenance.
-`observed_accuracy` is direct historical performance;
-`predicted_correctness` is an estimated probability of answering representative
-questions correctly. It is not a mastery probability.
+A build fails if the knowledge states and the data directory describe
+different populations, so simulated learners are never joined to real Moodle
+activity. Simulated results demonstrate the pipeline only.
 
-### Cutoffs
+## Learners
 
-The two populations are on different time axes (the English benchmark is
-synthetic 2023 data; the Moodle collector is current), so a single instant
-rarely fits both. `--as-of` is the default for both; `--knowledge-as-of` and
-`--moodle-as-of` override it per population. A cutoff must be Unix seconds or a
-timezone-aware ISO datetime; naive strings are rejected because the two
-loaders would otherwise interpret them differently (UTC vs collector-local).
+A profile is built for every learner who is enrolled at the cutoff (roster),
+appears in any collector export before the cutoff, or has a knowledge state.
 
-English KC states: the Milestone 3 predictions were computed from the events
-M3 was allowed to see. That bound is the `as_of` column of the state file
-(M3 `--as-of` run) or, for a full-history run, the latest `last_attempt_at`.
-If it lies after the requested cutoff the build fails, because the predictions
-would embed future events; re-run Milestone 3 with `--as-of`. The wall-clock
-`inference_timestamp` is provenance only and is not compared to the cutoff.
-Cold-start rows (no attempts, therefore no timestamp) are retained at any
-cutoff. Only rows that report attempts but lack a timestamp are excluded, and
-their count is recorded in the manifest. KC cutoffs are inclusive (M3
-convention). Moodle collector frames use the existing strict-before-cutoff
-behavior.
+## Knowledge semantics
 
-## Skills
+`learner_kc_state.csv` keeps one row per learner and KC with its provenance.
 
-`learner_model/mappings/kc_topic_map.csv` is the versioned source of truth for
-KC-to-skill and KC-to-topic relationships. The builder loads and validates an
-existing mapping and never overwrites it; a draft is generated only when it is
-absent. Bump `mapping_version` when the mapping is reviewed or changed.
+- `observed_accuracy`, `attempt_count`: direct evidence from the learner's answers.
+- `predicted_correctness`: estimated probability of answering the next question
+  on the KC correctly. It is not a mastery probability.
+- `p_mastery`: BKT's probability that the KC is known (Phase 1 only).
+- `state_status`: `estimated`, or `cold_start` when the learner has no answer on
+  the KC. A cold-start value is a prior, not evidence and not zero knowledge.
+- `estimator_phase`, `model_name`: 1 / BKT with fixed priors, or 3 / the deep
+  model that passed the promotion gate.
+
+## Cutoff
+
+`--as-of` must be Unix seconds or a timezone-aware ISO datetime; naive strings
+are rejected. Knowledge states must have been computed with a cutoff at or
+before it (their `as_of` column, or the latest `last_attempt_at` for a
+full-history run); otherwise the build fails because the estimates would embed
+future answers. Re-run `python -m knowledge_engine estimate --as-of ...`.
+Cold-start rows have no timestamp and are valid at any cutoff. KC cutoffs are
+inclusive; collector frames use strictly-before-cutoff.
 
 ## Outputs
 
-- `learner_profile.csv`: one profile per source population, learner, and build
-  snapshot; component availability is explicit.
-- `learner_kc_state.csv`: detailed learner-by-KC states, with
-  `source_population` separating English benchmark and Moodle-trained states.
-- `learner_skill_summary.csv`: aggregates by mapped skill and KC dimension.
-- `learner_dimension_summary.csv`: traceable dimension-level knowledge metrics.
-- `learner_behavior.csv`, `learner_engagement.csv`, and `learner_history.csv`:
-  Moodle-only summaries.
-- `weak_areas.csv`: KC-level evidence/prediction screening for each population.
-- `mappings/skill_taxonomy.csv` and `mappings/kc_topic_map.csv`: draft mapping
-  artifacts.
-- `build_manifest.json` and `validation_report.md`: provenance and validation.
-
-The original Milestone 3 state file is read-only input. The builder writes its
-component outputs to the configured output directory.
-
-## Rebuild
-
-From the repository root:
-
-```bash
-python -m learner_model.builder
-```
-
-`python learner-model.py` is an equivalent CLI entry point.
-
-Use `--data-dir`, `--knowledge-states`, `--concept-map`, `--mappings-dir`,
-`--output-dir`, `--as-of` / `--knowledge-as-of` / `--moodle-as-of` to select
-inputs, outputs, and snapshot cutoffs. `--generated-at` pins the generation
-timestamp so two builds of identical inputs are byte-identical (without it,
-`generated_at` and no-cutoff recency values use the current time).
-The builder loads Moodle knowledge states from
-`knowledge_tracing/artifacts/moodle_kt/knowledge_states/learner_skill_state.csv`
-when that file exists; override it with `--moodle-knowledge-states`.
+- `learner_profile.csv`: one row per learner; component statuses,
+  `knowledge_phase`, `knowledge_model`, `profile_completeness`.
+- `learner_kc_state.csv`: learner-by-KC states with KC names.
+- `learner_skill_summary.csv`, `learner_dimension_summary.csv`: aggregates that
+  trace back to KC rows.
+- `weak_areas.csv`: one row per learner and KC with a concern status and reason.
+- `learner_behavior.csv`, `learner_engagement.csv`, `learner_history.csv`.
+- `kc_skill_map.csv`: the KC-to-skill mapping used by this build.
+- `build_manifest.json`, `validation_report.md`: provenance and checks. The
+  builder stops before writing anything if a check fails.
 
 ## Component statuses in `learner_profile.csv`
 
-Each `*_status` reports the component's own status: `available`, `partial`
-(e.g. engagement without completion tracking), `cold_start_only` (knowledge
-with no estimated KC), `no_observations`, or `unavailable`.
-`profile_completeness` lists only components with a usable status.
+| Status | Meaning |
+|---|---|
+| `available` | The component has individual evidence for this learner. |
+| `partial` | Available with a known gap (for example engagement without completion tracking). |
+| `cold_start_only` | Knowledge, skills or weak areas built from priors only. |
+| `no_observations` | The collector has no activity for this learner yet. |
+| `unavailable` | The component could not be produced (no knowledge-state file). |
+
+`profile_completeness` lists the components with a usable status
+(`available`, `partial`, `cold_start_only`).

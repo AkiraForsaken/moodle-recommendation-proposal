@@ -1,4 +1,15 @@
-"""Reproducible orchestration for the Milestone 4 learner model."""
+"""Build learner profiles for one course from its own Moodle evidence.
+
+Inputs (all from the course, none from a benchmark dataset):
+
+    <data-dir>/*.csv               Moodle collector exports
+    learner_kc_state.csv           knowledge-engine contract (optional)
+
+Every enrolled learner gets a profile. Without a knowledge-state file the
+knowledge, skills and weak-area components are ``unavailable`` and the rest of
+the profile is still built; with it, a learner who has answered nothing has a
+``cold_start_only`` knowledge component (priors, not evidence).
+"""
 
 import argparse
 import hashlib
@@ -10,19 +21,21 @@ import pandas as pd
 
 from .behavior import build_behavior
 from .config import (
-    DEFAULT_CONCEPT_MAP,
     DEFAULT_DATA_DIR,
     DEFAULT_KNOWLEDGE_STATES,
-    DEFAULT_MAPPINGS_DIR,
-    DEFAULT_MOODLE_KNOWLEDGE_STATES,
-    DEFAULT_MOODLE_ROSTER,
     DEFAULT_OUTPUT_DIR,
     HIGH_PREDICTED_CORRECTNESS,
+    KC_CATALOG_FILE,
+    KC_TOPIC_MAP_FILE,
     LOW_OBSERVED_ACCURACY,
     LOW_PREDICTED_CORRECTNESS,
-    MAPPING_VERSION,
     MIN_ATTEMPTS_FOR_EVIDENCE_CONCERN,
+    MOODLE_POPULATION,
     PROFILE_SCHEMA_VERSION,
+    ROSTER_FILE,
+    SIMULATED_POPULATION,
+    SIMULATION_MANIFEST_NAME,
+    UNVERSIONED_MAPPING,
 )
 from .engagement import build_engagement
 from .history import build_history
@@ -30,17 +43,31 @@ from .knowledge import load_knowledge_states, summarize_dimensions
 from .profile import USABLE_STATUSES, build_profiles
 from .schemas import PROFILE_COLUMNS
 from .skills import (
-    build_taxonomy,
+    build_kc_skill_map,
     ensure_kc_coverage,
-    load_kc_mapping,
+    load_kc_catalog,
+    load_kc_topic_map,
     summarize_skills,
-    write_mapping_artifacts,
 )
 from .temporal import truncate_frames
 from .weak_areas import CONCERN_STATUSES, identify_weak_areas
 
-ENGLISH_POPULATION = "english_learning_events"
-MOODLE_POPULATION = "moodle_collector"
+COLLECTOR_FILES = {
+    "activity_catalog": "activity_catalog.csv",
+    "learning_events": "learning_events.csv",
+    "quiz_attempts": "quiz_attempts.csv",
+    "course_modules_completion": "course_modules_completion.csv",
+}
+OPTIONAL_INPUT_FILES = {
+    "learner_roster": ROSTER_FILE,
+    "kc_catalog": KC_CATALOG_FILE,
+    "kc_topic_map": KC_TOPIC_MAP_FILE,
+    "kc_activity_map": "kc_activity_map.csv",
+    "question_answer_events": "question_answer_events.csv",
+    "moodle_question_kc_mapping": "moodle_question_kc_map.csv",
+    "question_answer_mapping_report": "question_answer_mapping_report.csv",
+    "simulation_manifest": SIMULATION_MANIFEST_NAME,
+}
 
 
 def _sha256(path):
@@ -60,22 +87,46 @@ def _with_population(frame, population):
     return result
 
 
+def detect_population(data_dir):
+    """A directory written by the simulator is never reported as real Moodle data."""
+    if (Path(data_dir) / SIMULATION_MANIFEST_NAME).is_file():
+        return SIMULATED_POPULATION
+    return MOODLE_POPULATION
+
+
+def _read_optional(path, **kwargs):
+    """A collector export that does not exist yet is an empty table, not an error."""
+    return pd.read_csv(path, **kwargs) if Path(path).is_file() else pd.DataFrame()
+
+
 def _load_collector_frames(data_dir):
     """Load the Moodle collector exports used by behavioral components."""
-    activities = pd.read_csv(data_dir / "activity_catalog.csv")
-    events = pd.read_csv(data_dir / "learning_events.csv")
-    quizzes = pd.read_csv(data_dir / "quiz_attempts.csv")
-    completion_file = data_dir / "course_modules_completion.csv"
-    completions = (
-        pd.read_csv(completion_file) if completion_file.exists() else pd.DataFrame()
+    activities = _read_optional(data_dir / COLLECTOR_FILES["activity_catalog"])
+    events = _read_optional(data_dir / COLLECTOR_FILES["learning_events"])
+    quizzes = _read_optional(data_dir / COLLECTOR_FILES["quiz_attempts"])
+    completions = _read_optional(
+        data_dir / COLLECTOR_FILES["course_modules_completion"]
     )
-    roster_file = data_dir / "learner_roster.csv"
-    roster = (
-        pd.read_csv(roster_file, dtype={"learner_id": "string"})
-        if roster_file.exists()
-        else pd.DataFrame()
-    )
+    roster = _read_optional(data_dir / ROSTER_FILE, dtype={"learner_id": "string"})
     return activities, events, quizzes, completions, roster
+
+
+def _active_roster_ids(roster, cutoff_unix):
+    """Learners enrolled at the cutoff, including those with no activity yet."""
+    if roster.empty:
+        return set()
+    if "learner_id" not in roster or roster["learner_id"].isna().any():
+        raise ValueError("Learner roster must have non-empty learner_id values")
+    if {"enrol_start_unix", "enrol_end_unix"}.issubset(roster.columns):
+        cutoff = (
+            cutoff_unix
+            if cutoff_unix is not None
+            else int(pd.Timestamp.now(tz="UTC").timestamp())
+        )
+        starts = pd.to_numeric(roster["enrol_start_unix"], errors="coerce").fillna(0)
+        ends = pd.to_numeric(roster["enrol_end_unix"], errors="coerce").fillna(0)
+        roster = roster.loc[starts.le(cutoff) & (ends.eq(0) | ends.gt(cutoff))]
+    return set(roster["learner_id"].dropna().astype(str))
 
 
 def _latest_timestamp_map(frames):
@@ -107,13 +158,18 @@ def _latest_timestamp_map(frames):
     }
 
 
+def _time_column(frame, unix_name, text_name):
+    """(frame, column, is_unix) for the timestamp column the frame carries."""
+    return (frame, unix_name, True) if unix_name in frame else (frame, text_name, False)
+
+
 def normalize_as_of(as_of):
     """Return ``(iso_utc, unix_seconds)`` for a cutoff, or ``(None, None)``.
 
     A cutoff must be Unix seconds or a timezone-aware datetime string. Naive
-    strings are rejected: the English knowledge loader would read them as UTC
-    while the collector helper reads them as collector-local time, so the two
-    populations would silently use different instants.
+    strings are rejected: the knowledge loader would read them as UTC while the
+    collector helper reads them as collector-local time, so the components
+    would silently use different instants.
     """
     if as_of is None:
         return None, None
@@ -128,7 +184,7 @@ def normalize_as_of(as_of):
         if stamp.tzinfo is None:
             raise ValueError(
                 "as_of must be Unix seconds or a timezone-aware ISO datetime "
-                f"(e.g. 2023-12-01T00:00:00Z); got {as_of!r}"
+                f"(e.g. 2026-12-01T00:00:00Z); got {as_of!r}"
             )
         stamp = stamp.tz_convert("UTC")
     return stamp.isoformat(), int(stamp.timestamp())
@@ -161,14 +217,14 @@ def validate_outputs(outputs, as_of):
     )
     check(
         not _duplicates(profiles, ["source_population", "learner_id", "as_of"]),
-        "profile keys are unique within population and snapshot",
+        "profile keys are unique within the snapshot",
         "duplicate population/learner/snapshot profiles",
     )
 
     kc_states = outputs["learner_kc_state"]
     check(
         not _duplicates(kc_states, ["source_population", "learner_id", "kc_id"]),
-        "learner-KC keys are unique within population",
+        "learner-KC keys are unique",
         "duplicate source-population/learner/KC states",
     )
     for name, keys in {
@@ -178,7 +234,6 @@ def validate_outputs(outputs, as_of):
             "learner_id",
             "kc_dimension",
         ],
-        # "learner_topic_state": ["source_population", "learner_id", "topic"],
         "learner_behavior": ["source_population", "learner_id"],
         "learner_engagement": ["source_population", "learner_id"],
         "learner_history": ["source_population", "learner_id"],
@@ -191,7 +246,7 @@ def validate_outputs(outputs, as_of):
         )
 
     range_ok = True
-    for column in ("observed_accuracy", "predicted_correctness"):
+    for column in ("observed_accuracy", "predicted_correctness", "p_mastery"):
         if column in kc_states:
             values = pd.to_numeric(kc_states[column], errors="coerce")
             if (values.notna() & ~values.between(0, 1)).any():
@@ -202,6 +257,7 @@ def validate_outputs(outputs, as_of):
     for name, column in (
         ("learner_behavior", "revisit_rate"),
         ("learner_engagement", "topic_completion_rate"),
+        ("learner_engagement", "course_progress"),
     ):
         frame = outputs[name]
         if column in frame:
@@ -246,42 +302,24 @@ def validate_outputs(outputs, as_of):
         )
 
     if as_of is not None and not kc_states.empty:
-        cutoffs = as_of if isinstance(as_of, dict) else None
-        populations = (
-            kc_states["source_population"].dropna().unique()
-            if cutoffs is not None and "source_population" in kc_states
-            else [None]
-        )
-        bad = pd.Series(False, index=kc_states.index)
         attempts = pd.to_datetime(
             kc_states["last_attempt_at"], errors="coerce", utc=True
         )
         has_attempts = pd.to_numeric(kc_states["attempt_count"], errors="coerce").gt(0)
-        for population in populations:
-            mask = (
-                kc_states["source_population"].eq(population)
-                if population is not None
-                else pd.Series(True, index=kc_states.index)
-            )
-            cutoff_value = cutoffs.get(population) if cutoffs is not None else as_of
-            if cutoff_value is None:
-                continue
-            cutoff = pd.Timestamp(cutoff_value)
-            bad |= mask & (has_attempts & (attempts.isna() | attempts.gt(cutoff)))
+        bad = has_attempts & (attempts.isna() | attempts.gt(pd.Timestamp(as_of)))
         check(
             not bad.any(),
-            "KC last-attempt cutoffs are enforced per source population",
+            "KC last-attempt times respect the snapshot cutoff",
             "KC states contain a missing or post-cutoff last_attempt_at",
         )
 
-    # Cross-component: every component row belongs to a profile in its population.
+    # Cross-component: every component row belongs to a profile.
     keys = set(zip(profiles["source_population"], profiles["learner_id"].astype(str)))
     orphan = []
     for name in (
         "learner_kc_state",
         "learner_skill_summary",
         "learner_dimension_summary",
-        # "learner_topic_state",
         "learner_behavior",
         "learner_engagement",
         "learner_history",
@@ -295,7 +333,7 @@ def validate_outputs(outputs, as_of):
             orphan.append(name)
     check(
         not orphan,
-        "every component row belongs to a profile in its own population",
+        "every component row belongs to a profile",
         f"component rows without a matching profile: {orphan}",
     )
 
@@ -327,9 +365,7 @@ def validate_outputs(outputs, as_of):
     )
     if not kc_states.empty and "state_status" in kc_states:
         merged = weak.merge(
-            kc_states[
-                ["source_population", "learner_id", "kc_id", "attempt_count"]
-            ],
+            kc_states[["source_population", "learner_id", "kc_id", "attempt_count"]],
             left_on=["source_population", "learner_id", "entity_id"],
             right_on=["source_population", "learner_id", "kc_id"],
         )
@@ -352,19 +388,17 @@ def validate_outputs(outputs, as_of):
             .all(),
             "skill summaries trace to their KC rows (estimated + cold-start = KC count)",
             "skill summary KC counts are inconsistent",
-            #     )
-            # topic_state = outputs["learner_topic_state"]
-            # if not topic_state.empty:
-            #     check(
-            #         "p_mastery" in topic_state and "source_population" in topic_state,
-            #         "topic p_mastery remains in the Moodle topic-state table only",
-            #         "Moodle topic-state schema lacks p_mastery or source-population provenance",
-            #     )
-            # check(
-            #     "p_mastery" not in kc_states.columns,
-            #     "KC state table has no p_mastery column",
-            #     "learner_kc_state must not contain p_mastery",
         )
+
+    populations = set(profiles["source_population"].dropna())
+    for frame in outputs.values():
+        if "source_population" in frame and not frame.empty:
+            populations |= set(frame["source_population"].dropna())
+    check(
+        len(populations) <= 1,
+        "all outputs belong to one source population",
+        f"outputs mix source populations: {sorted(populations)}",
+    )
 
     valid_status = USABLE_STATUSES | {"unavailable", "no_observations"}
     for column in [c for c in profiles.columns if c.endswith("_status")]:
@@ -376,420 +410,242 @@ def validate_outputs(outputs, as_of):
     return checks
 
 
+def _empty_knowledge():
+    states = pd.DataFrame(
+        columns=[
+            "learner_id",
+            "kc_id",
+            "kc_dimension",
+            "attempt_count",
+            "evidence_count",
+            "observed_accuracy",
+            "predicted_correctness",
+            "p_mastery",
+            "last_attempt_at",
+            "state_status",
+            "model_name",
+            "model_version",
+            "estimator_phase",
+        ]
+    )
+    states.attrs.update(
+        source_learner_ids=[],
+        source_population=None,
+        knowledge_snapshot_as_of=None,
+        dropped_after_cutoff=0,
+        dropped_without_timestamp=0,
+    )
+    return states
+
+
+def _counts(series):
+    return {str(k): int(v) for k, v in series.value_counts().items()}
+
+
 def build_complete_learner_model(
     data_dir=DEFAULT_DATA_DIR,
     output_dir=DEFAULT_OUTPUT_DIR,
     knowledge_state_file=DEFAULT_KNOWLEDGE_STATES,
-    concept_map_file=DEFAULT_CONCEPT_MAP,
     as_of=None,
-    mappings_dir=DEFAULT_MAPPINGS_DIR,
     generated_at=None,
-    knowledge_as_of=None,
-    moodle_as_of=None,
-    moodle_knowledge_state_file=DEFAULT_MOODLE_KNOWLEDGE_STATES,
 ):
-    """Build both source populations without matching their learner identifiers.
+    """Build every learner-model component for the course in ``data_dir``.
 
-    ``mappings_dir`` holds the versioned KC mapping. An existing
-    ``kc_topic_map.csv`` there (e.g. supervisor-reviewed) is loaded and used;
-    a draft is generated only when it is absent. ``generated_at`` may be pinned
-    so that two builds of the same inputs are byte-identical.
+    ``knowledge_state_file`` is the knowledge-engine contract. If it does not
+    exist, profiles are still built and knowledge is ``unavailable``. Knowledge
+    states of another population than ``data_dir`` are rejected, so simulated
+    learners are never joined to real Moodle activity.
 
-    The two populations live on different time axes (the English benchmark is
-    synthetic 2023 data; the Moodle collector is current). ``as_of`` is the
-    default cutoff for both; ``knowledge_as_of`` / ``moodle_as_of`` override it
-    per population.
+    ``as_of`` cuts off every time-dependent component. ``generated_at`` may be
+    pinned so that two builds of the same inputs are byte-identical.
     """
     data_dir = Path(data_dir)
     output_dir = Path(output_dir)
     knowledge_state_file = Path(knowledge_state_file)
-    moodle_knowledge_state_file = Path(moodle_knowledge_state_file)
-    concept_map_file = Path(concept_map_file)
-    mappings_dir = Path(mappings_dir)
-    knowledge_as_of_iso, _ = normalize_as_of(
-        knowledge_as_of if knowledge_as_of is not None else as_of
-    )
-    moodle_as_of_iso, moodle_as_of_unix = normalize_as_of(
-        moodle_as_of if moodle_as_of is not None else as_of
-    )
-    required_inputs = [
-        knowledge_state_file,
-        concept_map_file,
-        data_dir / "activity_catalog.csv",
-        data_dir / "learning_events.csv",
-        data_dir / "quiz_attempts.csv",
-    ]
-    for path in required_inputs:
-        if not path.is_file():
-            raise FileNotFoundError(
-                f"Required learner-model input does not exist: {path}"
-            )
-    if (
-        moodle_knowledge_state_file != DEFAULT_MOODLE_KNOWLEDGE_STATES
-        and not moodle_knowledge_state_file.is_file()
-    ):
+    as_of_iso, as_of_unix = normalize_as_of(as_of)
+    if not data_dir.is_dir():
         raise FileNotFoundError(
-            f"Moodle knowledge-state file does not exist: {moodle_knowledge_state_file}"
+            f"Learner-model data directory does not exist: {data_dir}"
         )
-
     generated_at = generated_at or datetime.now(timezone.utc).isoformat()
-    states = load_knowledge_states(knowledge_state_file, as_of=knowledge_as_of_iso)
-    source_english_learners = states.attrs["source_learner_ids"]
-    english_latest = _latest_timestamp_map([(states, "last_attempt_at", False)])
-    dimensions = summarize_dimensions(states)
-    concept_map = pd.read_csv(concept_map_file, dtype={"kc_id": "string"})
-    taxonomy, draft_mapping = build_taxonomy(concept_map)
-    mapping_file = mappings_dir / "kc_topic_map.csv"
-    taxonomy_file = mappings_dir / "skill_taxonomy.csv"
-    taxonomy_status = "needs_review"
-    if taxonomy_file.is_file():
-        existing_taxonomy = pd.read_csv(
-            taxonomy_file, dtype={"taxonomy_status": "string"}
-        )
-        if "taxonomy_status" not in existing_taxonomy:
-            raise ValueError(
-                f"Skill taxonomy {taxonomy_file} is missing taxonomy_status"
-            )
-        if (
-            not existing_taxonomy.empty
-            and existing_taxonomy["taxonomy_status"].eq("reviewed").all()
-        ):
-            taxonomy_status = "reviewed"
-    if mapping_file.is_file():
-        kc_topic_map, mapping_version = load_kc_mapping(mapping_file)
-        mapping_origin = "existing_file"
-    else:
-        kc_topic_map, mapping_version = draft_mapping, MAPPING_VERSION
-        mapping_origin = "generated_draft"
-    kc_topic_map = ensure_kc_coverage(states, kc_topic_map, mapping_version)
-    skill_summary = summarize_skills(states, kc_topic_map, mapping_version)
-    weak_areas = identify_weak_areas(states, generated_at, mapping_version)
+    population = detect_population(data_dir)
 
-    moodle_states = pd.DataFrame()
-    if moodle_knowledge_state_file.is_file():
-        moodle_states = load_knowledge_states(
-            moodle_knowledge_state_file, as_of=moodle_as_of_iso
-        )
-    moodle_dimensions = summarize_dimensions(moodle_states)
-    moodle_skill_summary = summarize_skills(
-        moodle_states,
-        ensure_kc_coverage(moodle_states, kc_topic_map, mapping_version),
+    # ---- knowledge, skills, weak areas (from the knowledge-engine contract)
+    knowledge_available = knowledge_state_file.is_file()
+    if knowledge_available:
+        states = load_knowledge_states(knowledge_state_file, as_of=as_of_iso)
+        state_population = states.attrs["source_population"]
+        if state_population not in (None, population):
+            raise ValueError(
+                f"Knowledge states describe {state_population!r} learners but "
+                f"{data_dir} holds {population!r} data; refusing to combine them."
+            )
+    else:
+        states = _empty_knowledge()
+
+    kc_catalog = load_kc_catalog(data_dir)
+    kc_topic_map, topic_map_version = load_kc_topic_map(data_dir)
+    state_versions = (
+        states["mapping_version"].dropna().unique()
+        if "mapping_version" in states
+        else []
+    )
+    mapping_version = (
+        str(state_versions[0])
+        if len(state_versions) == 1
+        else topic_map_version or UNVERSIONED_MAPPING
+    )
+    kc_skill_map = ensure_kc_coverage(
+        states,
+        build_kc_skill_map(kc_catalog, kc_topic_map, mapping_version),
         mapping_version,
     )
-    moodle_weak_areas = identify_weak_areas(
-        moodle_states, generated_at, mapping_version
+    kc_names = dict(
+        zip(kc_catalog["kc_id"].astype(str), kc_catalog["kc_name"].astype(str))
     )
+    if not states.empty:
+        states.insert(
+            states.columns.get_loc("kc_id") + 1,
+            "kc_name",
+            [kc_names.get(kc_id, kc_id) for kc_id in states["kc_id"].astype(str)],
+        )
+    dimensions = summarize_dimensions(states)
+    skill_summary = summarize_skills(states, kc_skill_map, mapping_version)
+    weak_areas = identify_weak_areas(states, generated_at, mapping_version, kc_names)
 
+    # ---- behavior, engagement, history (from the collector exports)
     activities, events, quizzes, completions, roster = _load_collector_frames(data_dir)
-    completion_file = data_dir / "course_modules_completion.csv"
-    completion_tracking_available = completion_file.is_file() and not completions.empty
-    source_moodle_learners = set()
-    if not roster.empty:
-        if "learner_id" not in roster or roster["learner_id"].isna().any():
-            raise ValueError("Learner roster must have non-empty learner_id values")
-        if {"enrol_start_unix", "enrol_end_unix"}.issubset(roster.columns):
-            roster_cutoff = (
-                moodle_as_of_unix
-                if moodle_as_of_unix is not None
-                else int(pd.Timestamp.now(tz="UTC").timestamp())
-            )
-            starts = pd.to_numeric(roster["enrol_start_unix"], errors="coerce").fillna(0)
-            ends = pd.to_numeric(roster["enrol_end_unix"], errors="coerce").fillna(0)
-            active = starts.le(roster_cutoff) & (
-                ends.eq(0) | ends.gt(roster_cutoff)
-            )
-            roster = roster.loc[active]
-        source_moodle_learners.update(roster["learner_id"].dropna().astype(str))
-
+    completion_tracking_available = not completions.empty
     # Apply one collector cutoff to every time-dependent component. The
     # collector pipeline's established strict-before-T policy is preserved.
     events_snapshot, quizzes_snapshot, completions_snapshot, cutoff = truncate_frames(
-        events, quizzes, completions, moodle_as_of_unix
+        events, quizzes, completions, as_of_unix
     )
+    learner_ids = _active_roster_ids(roster, as_of_unix)
     for frame in (events_snapshot, quizzes_snapshot, completions_snapshot):
         if frame is not None and not frame.empty and "learner_id" in frame.columns:
-            source_moodle_learners.update(frame["learner_id"].dropna().astype(str))
-    if "learner_id" in moodle_states:
-        source_moodle_learners.update(
-            moodle_states["learner_id"].dropna().astype(str)
-        )
-    moodle_latest = _latest_timestamp_map(
+            learner_ids.update(frame["learner_id"].dropna().astype(str))
+    learner_ids.update(states.attrs["source_learner_ids"])
+    latest = _latest_timestamp_map(
         [
-            (
-                events_snapshot,
-                (
-                    "timestamp_unix"
-                    if "timestamp_unix" in events_snapshot
-                    else "timestamp"
-                ),
-                "timestamp_unix" in events_snapshot,
-            ),
-            (
-                quizzes_snapshot,
-                (
-                    "finish_time_unix"
-                    if "finish_time_unix" in quizzes_snapshot
-                    else "finish_time"
-                ),
-                "finish_time_unix" in quizzes_snapshot,
-            ),
-            (
-                completions_snapshot,
-                (
-                    "time_modified_unix"
-                    if "time_modified_unix" in completions_snapshot
-                    else "time_modified"
-                ),
-                "time_modified_unix" in completions_snapshot,
-            ),
+            _time_column(events_snapshot, "timestamp_unix", "timestamp"),
+            _time_column(quizzes_snapshot, "finish_time_unix", "finish_time"),
+            _time_column(completions_snapshot, "time_modified_unix", "time_modified"),
+            (states, "last_attempt_at", False),
         ]
     )
-    # topic_state = build_learner_model_from_frames(
-    #     activities,
-    #     events_snapshot,
-    #     quizzes_snapshot,
-    #     completions_snapshot,
-    #     generated_at=generated_at,
-    # )
-    # if topic_state.empty:
-    #     topic_state = _empty_topic_state()
-    # topic_state = _with_population(topic_state, MOODLE_POPULATION)
-
-    behavior = _with_population(
-        build_behavior(events_snapshot, activities, generated_at), MOODLE_POPULATION
-    )
-    engagement = _with_population(
-        build_engagement(
-            events_snapshot,
-            quizzes_snapshot,
-            completions_snapshot,
-            activities,
-            # topic_state.drop(columns="source_population", errors="ignore"),
-            generated_at,
-            as_of=cutoff if cutoff is not None else generated_at,
-            completion_tracking_available=completion_tracking_available,
-        ),
-        MOODLE_POPULATION,
-    )
-    history = _with_population(
-        build_history(
-            events_snapshot,
-            quizzes_snapshot,
-            completions_snapshot,
-            activities,
-            generated_at,
-        ),
-        MOODLE_POPULATION,
-    )
-
-    knowledge_output = pd.concat(
-        [
-            _with_population(states, ENGLISH_POPULATION),
-            _with_population(moodle_states, MOODLE_POPULATION),
-        ],
-        ignore_index=True,
-    )
-    skill_output = pd.concat(
-        [
-            _with_population(skill_summary, ENGLISH_POPULATION),
-            _with_population(moodle_skill_summary, MOODLE_POPULATION),
-        ],
-        ignore_index=True,
-    )
-    weak_output = pd.concat(
-        [
-            _with_population(weak_areas, ENGLISH_POPULATION),
-            _with_population(moodle_weak_areas, MOODLE_POPULATION),
-        ],
-        ignore_index=True,
-    )
-    dimension_output = pd.concat(
-        [
-            _with_population(dimensions, ENGLISH_POPULATION),
-            _with_population(moodle_dimensions, MOODLE_POPULATION),
-        ],
-        ignore_index=True,
-    )
-    component_frames = {
-        "knowledge": knowledge_output,
-        "skills": skill_output,
-        "weak_areas": weak_output,
-        "behavior": behavior,
-        "engagement": engagement,
-        "history": history,
-    }
-    profiles = build_profiles(
-        {
-            ENGLISH_POPULATION: source_english_learners,
-            MOODLE_POPULATION: source_moodle_learners,
-        },
-        component_frames,
+    behavior = build_behavior(events_snapshot, activities, generated_at)
+    engagement = build_engagement(
+        events_snapshot,
+        quizzes_snapshot,
+        completions_snapshot,
+        activities,
         generated_at,
-        as_of={
-            ENGLISH_POPULATION: knowledge_as_of_iso,
-            MOODLE_POPULATION: moodle_as_of_iso,
-        },
-        latest_timestamps={
-            ENGLISH_POPULATION: english_latest,
-            MOODLE_POPULATION: moodle_latest,
-        },
+        as_of=cutoff if cutoff is not None else generated_at,
+        completion_tracking_available=completion_tracking_available,
     )
+    history = build_history(
+        events_snapshot,
+        quizzes_snapshot,
+        completions_snapshot,
+        activities,
+        generated_at,
+    )
+
     outputs = {
-        "learner_profile": profiles,
-        "learner_kc_state": knowledge_output,
-        "learner_skill_summary": skill_output,
-        "learner_dimension_summary": dimension_output,
-        # "learner_topic_state": topic_state,
+        "learner_kc_state": states,
+        "learner_skill_summary": skill_summary,
+        "learner_dimension_summary": dimensions,
         "learner_behavior": behavior,
         "learner_engagement": engagement,
         "learner_history": history,
-        "weak_areas": weak_output,
+        "weak_areas": weak_areas,
     }
-    checks = validate_outputs(
-        outputs,
+    outputs = {
+        name: _with_population(frame, population) for name, frame in outputs.items()
+    }
+    profiles = build_profiles(
+        population,
+        learner_ids,
         {
-            ENGLISH_POPULATION: knowledge_as_of_iso,
-            MOODLE_POPULATION: moodle_as_of_iso,
+            "knowledge": outputs["learner_kc_state"],
+            "skills": outputs["learner_skill_summary"],
+            "weak_areas": outputs["weak_areas"],
+            "behavior": outputs["learner_behavior"],
+            "engagement": outputs["learner_engagement"],
+            "history": outputs["learner_history"],
         },
+        generated_at,
+        as_of=as_of_iso,
+        latest_timestamps=latest,
     )
+    outputs = {"learner_profile": profiles, **outputs}
+    checks = validate_outputs(outputs, as_of_iso)
 
     output_dir.mkdir(parents=True, exist_ok=True)
-    write_mapping_artifacts(taxonomy, kc_topic_map, mappings_dir)
     for name, frame in outputs.items():
         frame.to_csv(output_dir / f"{name}.csv", index=False)
+    kc_skill_map.to_csv(output_dir / "kc_skill_map.csv", index=False)
 
     input_files = {
-        "knowledge_state_file": knowledge_state_file,
-        "concept_map_file": concept_map_file,
-        "kc_topic_map": mapping_file,
-        "activity_catalog": data_dir / "activity_catalog.csv",
-        "learning_events": data_dir / "learning_events.csv",
-        "quiz_attempts": data_dir / "quiz_attempts.csv",
+        name: data_dir / filename
+        for name, filename in {**COLLECTOR_FILES, **OPTIONAL_INPUT_FILES}.items()
+        if (data_dir / filename).is_file()
     }
-    if moodle_knowledge_state_file.is_file():
-        input_files["moodle_knowledge_state_file"] = moodle_knowledge_state_file
-    roster_file = data_dir / "learner_roster.csv"
-    if roster_file.is_file():
-        input_files["learner_roster"] = roster_file
-    answer_events_file = data_dir / "question_answer_events.csv"
-    if answer_events_file.is_file():
-        input_files["question_answer_events"] = answer_events_file
-    question_mapping_file = data_dir / "moodle_question_kc_map.csv"
-    if question_mapping_file.is_file():
-        input_files["moodle_question_kc_mapping"] = question_mapping_file
-    mapping_report_file = data_dir / "question_answer_mapping_report.csv"
-    if mapping_report_file.is_file():
-        input_files["question_answer_mapping_report"] = mapping_report_file
-    if completion_file.is_file():
-        input_files["course_modules_completion"] = completion_file
-    inference_manifest = knowledge_state_file.with_name("inference_manifest.json")
-    if inference_manifest.is_file():
-        input_files["inference_manifest"] = inference_manifest
+    if knowledge_available:
+        input_files["knowledge_state_file"] = knowledge_state_file
+        engine_manifest = knowledge_state_file.with_name(
+            "knowledge_state_manifest.json"
+        )
+        if engine_manifest.is_file():
+            input_files["knowledge_state_manifest"] = engine_manifest
+    components = ["behavior", "engagement", "history"]
+    if knowledge_available:
+        components = ["knowledge", "skills", "weak_areas", *components]
     manifest = {
         "profile_schema_version": PROFILE_SCHEMA_VERSION,
         "generated_at": generated_at,
-        "as_of": {
-            ENGLISH_POPULATION: knowledge_as_of_iso,
-            MOODLE_POPULATION: moodle_as_of_iso,
-        },
-        "source_populations": {
-            ENGLISH_POPULATION: {
-                "learner_count": len(source_english_learners),
-                "components": ["knowledge", "skills", "weak_areas"],
-            },
-            MOODLE_POPULATION: {
-                "learner_count": len(source_moodle_learners),
-                "components": (
-                    ["knowledge", "skills", "weak_areas", "behavior", "engagement", "history"]
-                    if not moodle_states.empty
-                    else ["behavior", "engagement", "history"]
-                ),
-            },
-        },
+        "as_of": as_of_iso,
+        "source_population": population,
+        "learner_count": len(profiles),
+        "components": components,
         "inputs": {
             name: {"path": str(path), "sha256": _sha256(path)}
-            for name, path in input_files.items()
+            for name, path in sorted(input_files.items())
         },
-        "knowledge_provenance": {
-            "model_names": sorted(states["model_name"].dropna().unique().tolist()),
-            "model_versions": sorted(
-                states["model_version"].dropna().unique().tolist()
-            ),
-            "checkpoint_ids": sorted(
-                states["checkpoint_id"].dropna().unique().tolist()
-            ),
-            "checkpoint_sha256": sorted(
-                states["checkpoint_sha256"].dropna().unique().tolist()
-            ),
-            "aggregation_methods": sorted(
-                states["aggregation_method"].dropna().unique().tolist()
-            ),
-            "inference_timestamps": sorted(
-                states["inference_timestamp"].dropna().astype(str).unique().tolist()
-            ),
-            "knowledge_snapshot_as_of": states.attrs["knowledge_snapshot_as_of"],
-            "state_status_counts": {
-                str(k): int(v) for k, v in states["state_status"].value_counts().items()
-            },
-        },
-        "moodle_knowledge_provenance": (
+        "knowledge_provenance": (
             {
-                "model_names": sorted(
-                    moodle_states["model_name"].dropna().unique().tolist()
-                ),
+                "model_names": sorted(states["model_name"].dropna().unique().tolist()),
                 "model_versions": sorted(
-                    moodle_states["model_version"].dropna().unique().tolist()
+                    states["model_version"].dropna().unique().tolist()
+                ),
+                "estimator_phases": sorted(
+                    int(v) for v in states["estimator_phase"].dropna().unique()
                 ),
                 "checkpoint_ids": sorted(
-                    moodle_states["checkpoint_id"].dropna().unique().tolist()
+                    states["checkpoint_id"].dropna().unique().tolist()
                 ),
-                "mapping_versions": sorted(
-                    moodle_states["mapping_version"].dropna().unique().tolist()
-                )
-                if "mapping_version" in moodle_states
-                else [],
-                "state_status_counts": {
-                    str(k): int(v)
-                    for k, v in moodle_states["state_status"].value_counts().items()
-                },
-                "cold_start_semantics": (
-                    "Model prior for an empty response history; not individual evidence or mastery."
-                ),
+                "knowledge_snapshot_as_of": states.attrs["knowledge_snapshot_as_of"],
+                "state_status_counts": _counts(states["state_status"]),
+                "dropped_after_cutoff": states.attrs["dropped_after_cutoff"],
+                "dropped_without_last_attempt_at": states.attrs[
+                    "dropped_without_timestamp"
+                ],
             }
-            if not moodle_states.empty
+            if knowledge_available
             else None
         ),
-        "weak_area_counts": {
-            str(k): int(v)
-            for k, v in weak_areas["concern_status"].value_counts().items()
-        },
-        "knowledge_cutoff": {
-            "dropped_after_cutoff": states.attrs["dropped_after_cutoff"],
-            "dropped_without_last_attempt_at": states.attrs[
-                "dropped_without_timestamp"
-            ],
-        },
+        "weak_area_counts": _counts(weak_areas["concern_status"]),
         "mapping": {
             "version": mapping_version,
-            "origin": mapping_origin,
-            "mappings_dir": str(mappings_dir),
-            "status_counts": {
-                str(k): int(v)
-                for k, v in kc_topic_map["mapping_status"].value_counts().items()
-            },
-            "skill_taxonomy_status": taxonomy_status,
-            "kc_topic_mapping_status": (
-                "needs_review"
-                if kc_topic_map["mapping_status"].ne("mapped").any()
-                else "mapped"
-            ),
-            "topic_mapping_note": (
-                "Mappings are metadata only; English and Moodle learner populations "
-                "are not joined by this build."
-            ),
+            "kc_count": int(kc_catalog["kc_id"].nunique()),
+            "skill_count": int(kc_skill_map["skill_id"].nunique()),
+            "status_counts": _counts(kc_skill_map["mapping_status"]),
         },
         "knowledge_semantics": {
-            "predicted_correctness": "probability of answering representative questions correctly",
+            "predicted_correctness": "probability of answering the next question on the KC correctly",
+            "p_mastery": "BKT latent probability that the KC is known; null for other estimators",
+            "cold_start": "prior for a KC with no answers; not individual evidence or mastery",
         },
         "configuration": {
             "low_predicted_correctness_threshold": LOW_PREDICTED_CORRECTNESS,
@@ -803,143 +659,111 @@ def build_complete_learner_model(
     (output_dir / "build_manifest.json").write_text(
         json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
-
-    validation = [
-        "# Complete learner-model validation report",
-        "",
-        f"- Generated at: `{generated_at}`",
-        f"- Snapshot cutoff (English KC states): `{knowledge_as_of_iso or 'latest'}`",
-        f"- Snapshot cutoff (Moodle collector): `{moodle_as_of_iso or 'latest'}`",
-        f"- Mapping version: `{mapping_version}` ({mapping_origin})",
-        "- Source learner populations are kept separate; equal identifier strings are not joined.",
-        "- `predicted_correctness` is an answer-correctness estimate, not a mastery probability.",
-        "",
-        "## Output record counts",
-        "",
-        "| Output | Rows |",
-        "|---|---:|",
-    ]
-    validation.extend(
-        f"| `{name}.csv` | {len(frame)} |" for name, frame in outputs.items()
-    )
-    validation.extend(
-        [
-            "",
-            "## Missing-value summary",
-            "",
-            "| Output | Null cells | Columns with nulls |",
-            "|---|---:|---:|",
-            *[
-                f"| `{name}.csv` | {int(frame.isna().sum().sum())} | "
-                f"{int(frame.isna().any().sum())} |"
-                for name, frame in outputs.items()
-            ],
-            "",
-            "## Component availability",
-            "",
-            "| Population | Component | Status | Learners |",
-            "|---|---|---|---:|",
-        ]
-    )
-    status_columns = {
-        "knowledge": "knowledge_status",
-        "skills": "skills_status",
-        "weak areas": "weak_areas_status",
-        "behavior": "behavior_status",
-        "engagement": "engagement_status",
-        "history": "history_status",
-    }
-    for population, population_profiles in profiles.groupby(
-        "source_population", sort=True
-    ):
-        for component, column in status_columns.items():
-            counts = population_profiles[column].value_counts(dropna=False)
-            for status, count in counts.items():
-                validation.append(
-                    f"| `{population}` | {component} | {status} | {int(count)} |"
-                )
-    validation.extend(
-        [
-            "",
-            "## Mapping coverage",
-            "",
-            "| Mapping status | KC rows |",
-            "|---|---:|",
-            *[
-                f"| `{status}` | {int(count)} |"
-                for status, count in kc_topic_map["mapping_status"]
-                .value_counts(dropna=False)
-                .items()
-            ],
-            "",
-            "## Knowledge states and weak-area screening",
-            "",
-            "| KC state status | Rows |",
-            "|---|---:|",
-            *[
-                f"| `{k}` | {int(v)} |"
-                for k, v in states["state_status"].value_counts().items()
-            ],
-            "",
-            "| Concern status | Rows |",
-            "|---|---:|",
-            *[
-                f"| `{k}` | {int(v)} |"
-                for k, v in weak_areas["concern_status"].value_counts().items()
-            ],
-            "",
-            "## Checks",
-            "",
-            *[f"- PASS: {check}" for check in checks],
-            "- Validation failures: none (the builder stops before writing outputs if a check fails).",
-            "",
-            f"- KC rows excluded after cutoff: {states.attrs['dropped_after_cutoff']}",
-            "- KC rows excluded because `last_attempt_at` was missing at a requested cutoff: "
-            f"{states.attrs['dropped_without_timestamp']}",
-            f"- KC-to-topic mapping rows pending review: {int(kc_topic_map['mapping_status'].eq('needs_review').sum())}",
-            "- English course topic links are intentionally unset pending the Moodle refactor.",
-            "- Dimension-group skill summaries are drafts from KC metadata, not supervisor-validated skill ground truth.",
-            "- Moodle-specific KT states are joined only to Moodle learner IDs; English benchmark IDs remain a separate population.",
-            "- Cold-start Moodle predictions are model priors for empty response histories, not individual evidence or mastery.",
-            "- Behavior, engagement, and history describe Moodle collector data.",
-            "- KC cutoffs are inclusive (Milestone 3 convention); collector cutoffs are strictly before the cutoff (existing temporal policy).",
-            "- Weak-area rows cover every learner-KC state, including `no_current_concern` and `insufficient_evidence`; filter on `concern_status` to list concerns.",
-            "- Weak-area thresholds are configuration choices, not empirically calibrated cutoffs.",
-            "- Most estimated KC states have fewer direct attempts than the evidence threshold; see the concern counts above.",
-            "",
-        ]
-    )
-    (output_dir / "validation_report.md").write_text(
-        "\n".join(validation), encoding="utf-8"
+    _write_validation_report(
+        output_dir / "validation_report.md", outputs, manifest, kc_skill_map, checks
     )
     return outputs
 
 
+def _write_validation_report(path, outputs, manifest, kc_skill_map, checks):
+    profiles = outputs["learner_profile"]
+    population = manifest["source_population"]
+    lines = [
+        "# Learner-model validation report",
+        "",
+        f"- Generated at: `{manifest['generated_at']}`",
+        f"- Snapshot cutoff: `{manifest['as_of'] or 'latest'}`",
+        f"- Source population: `{population}`"
+        + (
+            " (SIMULATED learners: pipeline demonstration, not evidence about real learners)"
+            if population == SIMULATED_POPULATION
+            else ""
+        ),
+        f"- Mapping version: `{manifest['mapping']['version']}`",
+        "- `predicted_correctness` is an answer-correctness estimate, not a mastery probability.",
+        "",
+        "## Output record counts",
+        "",
+        "| Output | Rows | Null cells |",
+        "|---|---:|---:|",
+        *[
+            f"| `{name}.csv` | {len(frame)} | {int(frame.isna().sum().sum())} |"
+            for name, frame in outputs.items()
+        ],
+        "",
+        "## Component availability",
+        "",
+        "| Component | Status | Learners |",
+        "|---|---|---:|",
+    ]
+    for column in [c for c in PROFILE_COLUMNS if c.endswith("_status")]:
+        for status, count in profiles[column].value_counts(dropna=False).items():
+            lines.append(
+                f"| {column.removesuffix('_status')} | {status} | {int(count)} |"
+            )
+    provenance = manifest["knowledge_provenance"]
+    lines += ["", "## Knowledge"]
+    if provenance is None:
+        lines += [
+            "",
+            "No knowledge-state file was supplied: knowledge, skills and weak areas are "
+            "`unavailable`. Run `python -m knowledge_engine estimate` first.",
+        ]
+    else:
+        lines += [
+            "",
+            f"- Estimator: `{', '.join(provenance['model_names'])}` "
+            f"(phase {', '.join(map(str, provenance['estimator_phases']))})",
+            "",
+            "| KC state status | Rows |",
+            "|---|---:|",
+            *[f"| `{k}` | {v} |" for k, v in provenance["state_status_counts"].items()],
+            "",
+            "| Concern status | Rows |",
+            "|---|---:|",
+            *[f"| `{k}` | {v} |" for k, v in manifest["weak_area_counts"].items()],
+        ]
+    lines += [
+        "",
+        "## Mapping coverage",
+        "",
+        "| Mapping status | KC-skill rows |",
+        "|---|---:|",
+        *[f"| `{k}` | {v} |" for k, v in manifest["mapping"]["status_counts"].items()],
+        "",
+        "## Checks",
+        "",
+        *[f"- PASS: {check}" for check in checks],
+        "- Validation failures: none (the builder stops before writing outputs if a check fails).",
+        "",
+        "## Reading these outputs",
+        "",
+        "- A `cold_start` KC row is a prior shared by every learner without answers on that KC.",
+        "- Phase 1 estimates use fixed, uncalibrated BKT parameters.",
+        "- Weak-area thresholds are configuration choices, not empirically calibrated cutoffs.",
+        "- Weak-area rows cover every learner-KC state; filter on `concern_status` to list concerns.",
+        "- KC cutoffs are inclusive; collector cutoffs are strictly before the cutoff.",
+        "- Behavior, engagement and history describe participation, not knowledge.",
+        "",
+    ]
+    Path(path).write_text("\n".join(lines), encoding="utf-8")
+
+
 def main():
     parser = argparse.ArgumentParser(
-        description="Build the population-separated Milestone 4 learner model."
+        description="Build learner profiles from Moodle collector data and knowledge states."
     )
     parser.add_argument("--data-dir", type=Path, default=DEFAULT_DATA_DIR)
     parser.add_argument(
-        "--knowledge-states", type=Path, default=DEFAULT_KNOWLEDGE_STATES
-    )
-    parser.add_argument(
-        "--moodle-knowledge-states",
+        "--knowledge-states",
         type=Path,
-        default=DEFAULT_MOODLE_KNOWLEDGE_STATES,
+        default=DEFAULT_KNOWLEDGE_STATES,
+        help="knowledge-engine learner_kc_state.csv (optional: profiles build without it)",
     )
-    parser.add_argument("--concept-map", type=Path, default=DEFAULT_CONCEPT_MAP)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
-    parser.add_argument("--mappings-dir", type=Path, default=DEFAULT_MAPPINGS_DIR)
     parser.add_argument(
         "--as-of",
         help="snapshot cutoff: Unix seconds or timezone-aware ISO datetime",
-    )
-    parser.add_argument(
-        "--knowledge-as-of", help="override --as-of for English KC states"
-    )
-    parser.add_argument(
-        "--moodle-as-of", help="override --as-of for Moodle collector data"
     )
     parser.add_argument(
         "--generated-at",
@@ -950,15 +774,10 @@ def main():
         data_dir=args.data_dir,
         output_dir=args.output_dir,
         knowledge_state_file=args.knowledge_states,
-        moodle_knowledge_state_file=args.moodle_knowledge_states,
-        concept_map_file=args.concept_map,
         as_of=args.as_of,
-        mappings_dir=args.mappings_dir,
         generated_at=args.generated_at,
-        knowledge_as_of=args.knowledge_as_of,
-        moodle_as_of=args.moodle_as_of,
     )
-    print(f"Complete learner model written to {args.output_dir}")
+    print(f"Learner model written to {args.output_dir}")
     for name, frame in outputs.items():
         print(f"  {name}: {len(frame)} rows")
 

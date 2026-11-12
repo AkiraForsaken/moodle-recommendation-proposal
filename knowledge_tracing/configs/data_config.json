@@ -4,12 +4,42 @@
     "num_q": 2189,
     "num_c": 96,
     "max_concepts": 1,
-    "input_type": ["questions", "concepts"],
+    "input_type": [
+      "questions",
+      "concepts"
+    ],
     "maxlen": 200,
     "emb_path": "",
     "train_valid_file": "train_valid_sequences.csv",
     "test_file": "test_sequences.csv",
-    "folds": [0, 1],
+    "folds": [
+      0,
+      1
+    ],
+    "fold_meaning": {
+      "0": "train",
+      "1": "valid",
+      "-1": "test (separate file)"
+    }
+  },
+  "moodle_kt": {
+    "dpath": "data/processed/pykt_moodle",
+    "mapping_dir": "data/processed/moodle_kt",
+    "num_q": 390,
+    "num_c": 96,
+    "max_concepts": 1,
+    "input_type": [
+      "questions",
+      "concepts"
+    ],
+    "maxlen": 200,
+    "emb_path": "",
+    "train_valid_file": "train_valid_sequences.csv",
+    "test_file": "test_sequences.csv",
+    "folds": [
+      0,
+      1
+    ],
     "fold_meaning": {
       "0": "train",
       "1": "valid",

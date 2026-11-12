@@ -8,6 +8,7 @@ COMPLETION_STATE_LABELS = {
     1: "complete",
     2: "complete_pass",
     3: "complete_fail",
+    4: "complete_fail_hidden",  # failing grade on a hidden grade item (Moodle 4.0+)
 }
 
 COMPLETION_OPTIONAL_COLUMNS = [

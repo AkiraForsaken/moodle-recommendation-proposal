@@ -1,4 +1,8 @@
-"""Load and summarize Milestone 3 learner-by-KC knowledge states."""
+"""Load and summarize learner-by-KC knowledge states (the knowledge-engine contract).
+
+The learner model does not know which estimator produced the rows: Phase 1
+BKT and the Phase 3 deep model write the same columns.
+"""
 
 from pathlib import Path
 
@@ -14,14 +18,21 @@ REQUIRED_KNOWLEDGE_COLUMNS = {
     "last_attempt_at",
     "model_name",
     "model_version",
+    "estimator_phase",
+    "inference_timestamp",
+    "evidence_count",
+    "state_status",
+    "source_population",
+}
+# Present for some estimators only (null otherwise); added as null if absent.
+OPTIONAL_KNOWLEDGE_COLUMNS = (
+    "p_mastery",
     "checkpoint_id",
     "checkpoint_sha256",
-    "inference_timestamp",
     "aggregation_method",
-    "evidence_count",
     "prediction_question_count",
-    "state_status",
-}
+    "mapping_version",
+)
 
 
 def _utc_timestamp(value):
@@ -38,7 +49,7 @@ def _source_snapshot(states):
         declared = pd.to_datetime(states["as_of"], errors="coerce", utc=True).dropna()
         if not declared.empty:
             if declared.nunique() > 1:
-                raise ValueError("Knowledge states mix several Milestone 3 as_of cutoffs")
+                raise ValueError("Knowledge states mix several as_of cutoffs")
             return declared.iloc[0]
     attempts = pd.to_datetime(states["last_attempt_at"], errors="coerce", utc=True).dropna()
     return attempts.max() if not attempts.empty else None
@@ -47,8 +58,8 @@ def _source_snapshot(states):
 def load_knowledge_states(path, as_of=None):
     """Load source rows without changing their probability semantics or provenance.
 
-    With a cutoff, the Milestone 3 snapshot must not post-date it (otherwise the
-    predictions leak future events and a ValueError is raised). Cold-start rows
+    With a cutoff, the knowledge snapshot must not post-date it (otherwise the
+    estimates leak future events and a ValueError is raised). Cold-start rows
     (no attempts, hence no timestamp) are retained. Rows that report attempts
     but have no timestamp cannot be placed in time and are excluded; counts are
     exposed in ``DataFrame.attrs``.
@@ -70,6 +81,12 @@ def load_knowledge_states(path, as_of=None):
         raise ValueError(
             "Knowledge-state file contains duplicate learner_id/kc_id rows"
         )
+    if states["source_population"].nunique(dropna=False) > 1:
+        raise ValueError("Knowledge-state file mixes several source populations")
+    for column in OPTIONAL_KNOWLEDGE_COLUMNS:
+        if column not in states:
+            states[column] = pd.NA
+    states["kc_dimension"] = states["kc_dimension"].astype("string").str.strip().str.lower()
 
     source_learner_ids = states["learner_id"].dropna().astype(str).unique().tolist()
     dropped_after_cutoff = 0
@@ -80,19 +97,19 @@ def load_knowledge_states(path, as_of=None):
         if pd.isna(cutoff):
             raise ValueError(f"Invalid as_of cutoff: {as_of!r}")
 
-        # Leakage guard. The AKT predictions were computed from the events that
-        # Milestone 3 was allowed to see. Those events are bounded by the M3
-        # snapshot cutoff (the `as_of` column) or, for a full-history run, by
-        # the latest last_attempt_at. If that snapshot lies after the requested
-        # cutoff, predictions embed future events and the snapshot is invalid.
+        # Leakage guard. The estimates were computed from the answers the
+        # knowledge engine was allowed to see. Those are bounded by its
+        # cutoff (the `as_of` column) or, for a full-history run, by the
+        # latest last_attempt_at. If that snapshot lies after the requested
+        # cutoff, the estimates embed future events and are invalid.
         # (The wall-clock `inference_timestamp` is provenance only; comparing it
         # to a data-time cutoff would reject every valid re-run.)
         if knowledge_snapshot is not None and knowledge_snapshot > cutoff:
             raise ValueError(
                 f"Knowledge states reflect events up to {knowledge_snapshot}, which is "
                 f"after the requested cutoff {cutoff}. Predictions computed from later "
-                "events would leak the future; re-run Milestone 3 inference with "
-                "--as-of at or before the cutoff."
+                "events would leak the future; re-run `python -m knowledge_engine "
+                "estimate --as-of` at or before the cutoff."
             )
 
         attempts = pd.to_datetime(states["last_attempt_at"], errors="coerce", utc=True)
@@ -106,7 +123,7 @@ def load_knowledge_states(path, as_of=None):
         dropped_without_timestamp = int(untimed.sum())
         states = states.loc[~after & ~untimed].copy()
 
-    for column in ("observed_accuracy", "predicted_correctness"):
+    for column in ("observed_accuracy", "predicted_correctness", "p_mastery"):
         numeric = pd.to_numeric(states[column], errors="coerce")
         invalid = numeric.notna() & ~numeric.between(0, 1)
         if invalid.any():
@@ -118,6 +135,8 @@ def load_knowledge_states(path, as_of=None):
     states.attrs["dropped_after_cutoff"] = dropped_after_cutoff
     states.attrs["dropped_without_timestamp"] = dropped_without_timestamp
     states.attrs["source_learner_ids"] = source_learner_ids
+    populations = states["source_population"].dropna().unique()
+    states.attrs["source_population"] = str(populations[0]) if len(populations) else None
     states.attrs["as_of"] = None if as_of is None else cutoff.isoformat()
     states.attrs["knowledge_snapshot_as_of"] = (
         None if knowledge_snapshot is None else knowledge_snapshot.isoformat()

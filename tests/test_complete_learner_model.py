@@ -4,61 +4,89 @@ import pandas as pd
 import pytest
 
 from learner_model.builder import (
-    ENGLISH_POPULATION,
     MOODLE_POPULATION,
+    SIMULATED_POPULATION,
     build_complete_learner_model,
     normalize_as_of,
 )
 from learner_model.engagement import build_engagement
 from learner_model.history import build_history
 from learner_model.knowledge import load_knowledge_states
-from learner_model.skills import build_taxonomy, summarize_skills
+from learner_model.skills import build_kc_skill_map, summarize_skills
 from learner_model.weak_areas import identify_weak_areas
 from tests.demo_data import write_collector_csvs
 
 
-def _knowledge_rows():
+def _knowledge_rows(population=MOODLE_POPULATION):
+    """Two KC states of one learner, in the knowledge-engine contract."""
+    shared = {
+        "learner_id": "L0001",
+        "kc_dimension": "grammar",
+        "model_name": "bkt_item_level",
+        "model_version": "test-version",
+        "estimator_phase": 1,
+        "checkpoint_id": None,
+        "checkpoint_sha256": None,
+        "aggregation_method": "test-mean",
+        "prediction_question_count": None,
+        "inference_timestamp": "2026-11-08T08:40:57+00:00",
+        "mapping_version": "map-1",
+        "source_population": population,
+    }
     return pd.DataFrame(
         [
             {
-                "learner_id": "L0001",
-                "split": "train",
+                **shared,
                 "kc_id": "KC001",
-                "kc_dimension": "grammar",
                 "attempt_count": 4,
+                "evidence_count": 4,
                 "observed_accuracy": 0.25,
                 "predicted_correctness": 0.50,
+                "p_mastery": 0.40,
                 "last_attempt_at": "2023-10-14T09:30:14+00:00",
-                "model_name": "akt",
-                "model_version": "test-version",
-                "checkpoint_id": "test-checkpoint",
-                "checkpoint_sha256": "abc123",
-                "aggregation_method": "test-mean",
-                "evidence_count": 4,
-                "prediction_question_count": 5,
                 "state_status": "estimated",
-                "inference_timestamp": "2026-11-08T08:40:57+00:00",
             },
             {
-                "learner_id": "L0001",
-                "split": "train",
+                **shared,
                 "kc_id": "KC002",
-                "kc_dimension": "grammar",
                 "attempt_count": 0,
+                "evidence_count": 0,
                 "observed_accuracy": None,
                 "predicted_correctness": 0.45,
+                "p_mastery": 0.30,
                 "last_attempt_at": None,
-                "model_name": "akt",
-                "model_version": "test-version",
-                "checkpoint_id": "test-checkpoint",
-                "checkpoint_sha256": "abc123",
-                "aggregation_method": "test-mean",
-                "evidence_count": 0,
-                "prediction_question_count": 5,
                 "state_status": "cold_start",
-                "inference_timestamp": "2026-11-08T08:40:57+00:00",
             },
         ]
+    )
+
+
+def _course_files(data_dir):
+    """The KC catalog and topic links the collector exports for a course."""
+    pd.DataFrame(
+        {
+            "kc_id": ["KC001", "KC002"],
+            "kc_name": ["Present simple -s", "Negation"],
+            "kc_dimension": ["Grammar", "grammar"],
+            "learning_objective": ["Apply -s/-es.", "Form negatives."],
+        }
+    ).to_csv(data_dir / "kc_catalog.csv", index=False)
+    pd.DataFrame(
+        {"kc_id": ["KC001"], "topic": ["Unit 1"], "mapping_version": ["map-1"]}
+    ).to_csv(data_dir / "kc_topic_map.csv", index=False)
+
+
+def _build(tmp_path, states=None, with_course=True, **kwargs):
+    data_dir = write_collector_csvs(tmp_path / "data")
+    if with_course:
+        _course_files(data_dir)
+    states_path = tmp_path / "learner_kc_state.csv"
+    (_knowledge_rows() if states is None else states).to_csv(states_path, index=False)
+    return build_complete_learner_model(
+        data_dir=data_dir,
+        output_dir=tmp_path / "out",
+        knowledge_state_file=states_path,
+        **kwargs,
     )
 
 
@@ -84,8 +112,8 @@ def test_knowledge_cutoff_rejects_states_computed_from_later_events(tmp_path):
         load_knowledge_states(source, as_of="2023-10-01T00:00:00+00:00")
 
 
-def test_knowledge_cutoff_uses_m3_snapshot_not_wall_clock_inference_time(tmp_path):
-    """Regression: a valid M3 re-run (as_of column set) was rejected because the
+def test_knowledge_cutoff_uses_snapshot_not_wall_clock_inference_time(tmp_path):
+    """Regression: a valid re-run (as_of column set) was rejected because the
     wall-clock inference_timestamp (2026) post-dates any data-time cutoff."""
     source = tmp_path / "states.csv"
     states = _knowledge_rows()
@@ -109,129 +137,143 @@ def test_knowledge_cutoff_excludes_rows_with_attempts_but_no_timestamp(tmp_path)
     assert loaded.attrs["dropped_without_timestamp"] == 1
 
 
-def test_draft_taxonomy_and_weak_area_preserve_review_and_probability_semantics():
-    concept_map = pd.DataFrame(
+def test_skills_group_kcs_by_dimension_within_topic():
+    catalog = pd.DataFrame(
         {
-            "kc_id": ["KC001", "KC002"],
-            "kc_dimension": ["grammar", "grammar"],
-            "concepts": [0, 1],
+            "kc_id": ["KC001", "KC002", "KC003"],
+            "kc_name": ["A", "B", "C"],
+            "kc_dimension": ["grammar", "grammar", "vocabulary"],
         }
     )
-    taxonomy, mapping = build_taxonomy(concept_map)
-    states = _knowledge_rows().iloc[[0]].copy()
-    skills = summarize_skills(states, mapping)
-    weak = identify_weak_areas(states, generated_at="2026-11-09T00:00:00+00:00")
+    topics = pd.DataFrame({"kc_id": ["KC001", "KC001", "KC003"], "topic": ["Unit 1", "Unit 2", "Unit 1"]})
 
-    assert taxonomy["taxonomy_status"].eq("needs_review").all()
-    assert mapping["topic"].isna().all()
-    assert mapping["mapping_status"].eq("needs_review").all()
-    assert skills.iloc[0]["state_status"] == "needs_review"
-    assert weak.iloc[0]["concern_status"] == "evidence_based_concern"
-    assert weak.iloc[0]["predicted_correctness"] == pytest.approx(0.5)
-    assert "not a mastery estimate" not in weak.iloc[0]["reason"]
+    mapping = build_kc_skill_map(catalog, topics, "map-1")
+
+    # A KC used in two topics belongs to two skills; one without a topic falls
+    # back to its dimension.
+    assert mapping[["kc_id", "skill_id"]].values.tolist() == [
+        ["KC001", "grammar|Unit 1"],
+        ["KC001", "grammar|Unit 2"],
+        ["KC002", "dimension:grammar"],
+        ["KC003", "vocabulary|Unit 1"],
+    ]
+    assert mapping.loc[0, "skill_name"] == "Grammar: Unit 1"
+    assert mapping["mapping_status"].eq("mapped").all()
+
+    skills = summarize_skills(_knowledge_rows(), mapping, "map-1")
+    assert skills["skill_id"].tolist() == ["dimension:grammar", "grammar|Unit 1", "grammar|Unit 2"]
+    assert skills["kc_count"].tolist() == [1, 1, 1]
+    assert skills["mapping_version"].eq("map-1").all()
 
 
-def test_complete_build_keeps_english_and_moodle_populations_separate(tmp_path):
+def test_profiles_build_without_any_knowledge_states(tmp_path):
     data_dir = write_collector_csvs(tmp_path / "data")
-    states_path = tmp_path / "knowledge_states.csv"
-    concept_map_path = tmp_path / "concept_map.csv"
-    output_dir = tmp_path / "out"
-    _knowledge_rows().to_csv(states_path, index=False)
-    pd.DataFrame(
-        {
-            "kc_id": ["KC001", "KC002"],
-            "concepts": [0, 1],
-            "kc_dimension": ["grammar", "grammar"],
-        }
-    ).to_csv(concept_map_path, index=False)
-
-    outputs = build_complete_learner_model(
-        data_dir=data_dir,
-        output_dir=output_dir,
-        knowledge_state_file=states_path,
-        concept_map_file=concept_map_path,
-        mappings_dir=tmp_path / "mappings",
-    )
-
-    profiles = outputs["learner_profile"]
-    english = profiles[profiles["source_population"] == ENGLISH_POPULATION]
-    moodle = profiles[profiles["source_population"] == MOODLE_POPULATION]
-    assert english["learner_id"].tolist() == ["L0001"]
-    assert len(moodle) == 11
-    assert english.iloc[0]["knowledge_status"] == "available"
-    assert english.iloc[0]["behavior_status"] == "unavailable"
-    assert moodle["knowledge_status"].eq("unavailable").all()
-    assert moodle["behavior_status"].eq("available").all()
-    # Completion tracking is absent, so engagement must stay "partial" in the
-    # profile rather than being flattened to "available".
-    assert moodle["engagement_status"].eq("partial").all()
-    assert "learner_topic_state" not in outputs
-    assert outputs["learner_kc_state"]["source_population"].eq(
-        ENGLISH_POPULATION
-    ).all()
-    assert outputs["learner_engagement"]["completed_activity_count"].isna().all()
-    assert outputs["learner_engagement"]["topic_completion_rate"].isna().all()
-    assert outputs["learner_history"]["total_completed_activities"].isna().all()
-
-    topic_mapping = pd.read_csv(tmp_path / "mappings" / "kc_topic_map.csv")
-    manifest = json.loads((output_dir / "build_manifest.json").read_text())
-    assert topic_mapping["topic"].isna().all()
-    assert manifest["mapping"]["kc_topic_mapping_status"] == "needs_review"
-    assert "predicted_correctness" in manifest["knowledge_semantics"]
-    assert (output_dir / "validation_report.md").is_file()
-
-
-def test_complete_build_attaches_moodle_kt_and_roster_cold_start_profiles(tmp_path):
-    data_dir = write_collector_csvs(tmp_path / "data")
-    roster = pd.DataFrame(
-        {
-            "learner_id": ["99"],
-            "course_id": [2],
-            "enrol_start_unix": [0],
-            "enrol_end_unix": [0],
-        }
-    )
-    roster.to_csv(data_dir / "learner_roster.csv", index=False)
-    states_path = tmp_path / "english_states.csv"
-    _knowledge_rows().to_csv(states_path, index=False)
-    moodle_states_path = tmp_path / "moodle_states.csv"
-    moodle_states = _knowledge_rows().iloc[[1]].copy()
-    moodle_states["learner_id"] = "99"
-    moodle_states["mapping_version"] = "moodle-map-1"
-    moodle_states.to_csv(moodle_states_path, index=False)
-    concept_map_path = tmp_path / "concept_map.csv"
-    pd.DataFrame(
-        {
-            "kc_id": ["KC001", "KC002"],
-            "concepts": [0, 1],
-            "kc_dimension": ["grammar", "grammar"],
-        }
-    ).to_csv(concept_map_path, index=False)
 
     outputs = build_complete_learner_model(
         data_dir=data_dir,
         output_dir=tmp_path / "out",
-        knowledge_state_file=states_path,
-        moodle_knowledge_state_file=moodle_states_path,
-        concept_map_file=concept_map_path,
-        mappings_dir=tmp_path / "mappings",
+        knowledge_state_file=tmp_path / "no_such_file.csv",
     )
 
-    moodle_profile = outputs["learner_profile"].query(
-        "source_population == @MOODLE_POPULATION and learner_id == '99'"
-    ).iloc[0]
-    assert moodle_profile["knowledge_status"] == "cold_start_only"
-    assert moodle_profile["behavior_status"] == "unavailable"
-    moodle_kc = outputs["learner_kc_state"].query(
-        "source_population == @MOODLE_POPULATION and learner_id == '99'"
-    )
-    assert moodle_kc["state_status"].eq("cold_start").all()
-    assert moodle_kc["observed_accuracy"].isna().all()
-    assert moodle_kc["predicted_correctness"].notna().all()
+    profiles = outputs["learner_profile"]
+    assert len(profiles) == 11
+    assert profiles["source_population"].eq(MOODLE_POPULATION).all()
+    assert profiles["knowledge_status"].eq("unavailable").all()
+    assert profiles["knowledge_phase"].isna().all()
+    assert profiles["behavior_status"].eq("available").all()
+    # Completion tracking is absent, so engagement must stay "partial" in the
+    # profile rather than being flattened to "available".
+    assert profiles["engagement_status"].eq("partial").all()
+    assert outputs["learner_kc_state"].empty and outputs["weak_areas"].empty
+    assert outputs["learner_engagement"]["completed_activity_count"].isna().all()
+    assert outputs["learner_history"]["total_completed_activities"].isna().all()
     manifest = json.loads((tmp_path / "out" / "build_manifest.json").read_text())
-    assert manifest["moodle_knowledge_provenance"]["mapping_versions"] == [
-        "moodle-map-1"
-    ]
+    assert manifest["knowledge_provenance"] is None
+    assert manifest["components"] == ["behavior", "engagement", "history"]
+    assert (tmp_path / "out" / "validation_report.md").is_file()
+
+
+def test_build_joins_knowledge_states_to_the_course_catalog(tmp_path):
+    outputs = _build(tmp_path)
+
+    profile = outputs["learner_profile"].query("learner_id == 'L0001'").iloc[0]
+    assert profile["knowledge_status"] == "available"
+    assert profile["knowledge_phase"] == 1
+    assert profile["knowledge_model"] == "bkt_item_level"
+    # L0001 has knowledge states but no Moodle activity rows.
+    assert profile["behavior_status"] == "no_observations"
+    kc = outputs["learner_kc_state"]
+    assert kc["kc_name"].tolist() == ["Present simple -s", "Negation"]
+    assert kc["p_mastery"].tolist() == [0.40, 0.30]
+    weak = outputs["weak_areas"].set_index("entity_id")
+    assert weak.loc["KC001", "entity_name"] == "Present simple -s"
+    assert weak.loc["KC001", "concern_status"] == "evidence_based_concern"
+    assert weak["mapping_version"].eq("map-1").all()
+    skills = outputs["learner_skill_summary"]
+    assert skills["skill_id"].tolist() == ["dimension:grammar", "grammar|Unit 1"]
+    manifest = json.loads((tmp_path / "out" / "build_manifest.json").read_text())
+    assert manifest["knowledge_provenance"]["estimator_phases"] == [1]
+    assert manifest["mapping"]["version"] == "map-1"
+    assert "kc_catalog" in manifest["inputs"]
+    skill_map = pd.read_csv(tmp_path / "out" / "kc_skill_map.csv")
+    assert skill_map["mapping_status"].eq("mapped").all()
+
+
+def test_enrolled_learner_without_activity_gets_a_cold_start_profile(tmp_path):
+    data_dir = write_collector_csvs(tmp_path / "data")
+    _course_files(data_dir)
+    pd.DataFrame(
+        {"learner_id": ["99"], "course_id": [2], "enrol_start_unix": [0], "enrol_end_unix": [0]}
+    ).to_csv(data_dir / "learner_roster.csv", index=False)
+    states = pd.concat([_knowledge_rows().iloc[[1]]] * 2, ignore_index=True)
+    states["learner_id"] = "99"
+    states["kc_id"] = ["KC001", "KC002"]
+    states_path = tmp_path / "learner_kc_state.csv"
+    states.to_csv(states_path, index=False)
+
+    outputs = build_complete_learner_model(
+        data_dir=data_dir, output_dir=tmp_path / "out", knowledge_state_file=states_path
+    )
+
+    profile = outputs["learner_profile"].query("learner_id == '99'").iloc[0]
+    # Priors only: nothing about this learner is individual evidence yet.
+    assert profile["knowledge_status"] == "cold_start_only"
+    assert profile["skills_status"] == "cold_start_only"
+    assert profile["weak_areas_status"] == "cold_start_only"
+    assert profile["behavior_status"] == "no_observations"
+    kc = outputs["learner_kc_state"].query("learner_id == '99'")
+    assert kc["state_status"].eq("cold_start").all()
+    assert kc["observed_accuracy"].isna().all()
+    assert kc["predicted_correctness"].notna().all()
+    weak = outputs["weak_areas"].query("learner_id == '99'")
+    assert weak["concern_status"].eq("insufficient_evidence").all()
+
+
+def test_simulated_learners_are_labelled_and_never_joined_to_moodle_data(tmp_path):
+    data_dir = write_collector_csvs(tmp_path / "data")
+    states_path = tmp_path / "learner_kc_state.csv"
+    _knowledge_rows(SIMULATED_POPULATION).to_csv(states_path, index=False)
+
+    with pytest.raises(ValueError, match="refusing to combine"):
+        build_complete_learner_model(
+            data_dir=data_dir, output_dir=tmp_path / "out", knowledge_state_file=states_path
+        )
+
+    (data_dir / "simulation_manifest.json").write_text("{}", encoding="utf-8")
+    outputs = build_complete_learner_model(
+        data_dir=data_dir, output_dir=tmp_path / "out", knowledge_state_file=states_path
+    )
+    for frame in outputs.values():
+        assert frame["source_population"].eq(SIMULATED_POPULATION).all()
+
+
+def test_kcs_missing_from_the_catalog_stay_visible_but_join_no_skill(tmp_path):
+    outputs = _build(tmp_path, with_course=False)
+
+    assert outputs["learner_skill_summary"].empty
+    assert len(outputs["learner_kc_state"]) == 2  # KC rows are never dropped
+    skill_map = pd.read_csv(tmp_path / "out" / "kc_skill_map.csv")
+    assert skill_map["mapping_status"].eq("unmapped").all()
 
 
 def test_engagement_summarizes_collector_rows_without_legacy_topic_state():
@@ -314,101 +356,25 @@ def test_weak_area_rules(attempts, observed, predicted, expected):
         assert row["concern_status"] != "evidence_based_concern"
 
 
-# ------------------------------------------------------------------- mapping
-def _mapping_frame(version="1.0.0-reviewed", status="mapped"):
-    return pd.DataFrame(
-        {
-            "kc_id": ["KC001", "KC002"],
-            "kc_dimension": ["grammar", "grammar"],
-            "skill_id": ["skill:tenses", "skill:tenses"],
-            "skill_name": ["Verb tenses", "Verb tenses"],
-            "topic": ["Tenses", None],
-            "mapping_status": [status, status],
-            "mapping_source": ["supervisor review", "supervisor review"],
-            "mapping_version": [version, version],
-        }
-    )
+def test_phase_one_cold_start_prior_is_not_flagged_as_a_concern():
+    """The fixed prior is shared by every new learner; it says nothing about one."""
+    state = {
+        "learner_id": "L1",
+        "kc_id": "KC1",
+        "attempt_count": 0,
+        "evidence_count": 0,
+        "observed_accuracy": None,
+        "predicted_correctness": 0.445,
+    }
+    prior = identify_weak_areas(pd.DataFrame([{**state, "estimator_phase": 1}]), "g").iloc[0]
+    trained = identify_weak_areas(pd.DataFrame([{**state, "estimator_phase": 3}]), "g").iloc[0]
 
-
-def _build(tmp_path, **kwargs):
-    data_dir = write_collector_csvs(tmp_path / "data")
-    states_path = tmp_path / "knowledge_states.csv"
-    concept_map_path = tmp_path / "concept_map.csv"
-    _knowledge_rows().to_csv(states_path, index=False)
-    pd.DataFrame(
-        {"kc_id": ["KC001", "KC002"], "concepts": [0, 1],
-         "kc_dimension": ["grammar", "grammar"]}
-    ).to_csv(concept_map_path, index=False)
-    return build_complete_learner_model(
-        data_dir=data_dir,
-        output_dir=tmp_path / "out",
-        knowledge_state_file=states_path,
-        concept_map_file=concept_map_path,
-        mappings_dir=tmp_path / "mappings",
-        **kwargs,
-    )
-
-
-def test_reviewed_mapping_is_loaded_and_never_overwritten(tmp_path):
-    (tmp_path / "mappings").mkdir()
-    mapping_path = tmp_path / "mappings" / "kc_topic_map.csv"
-    _mapping_frame().to_csv(mapping_path, index=False)
-    pd.DataFrame(
-        {"taxonomy_status": ["reviewed"]}
-    ).to_csv(tmp_path / "mappings" / "skill_taxonomy.csv", index=False)
-    before = mapping_path.read_bytes()
-
-    outputs = _build(tmp_path)
-
-    skills = outputs["learner_skill_summary"]
-    assert skills["skill_id"].tolist() == ["skill:tenses"]
-    assert skills["mapping_version"].eq("1.0.0-reviewed").all()
-    assert skills["state_status"].eq("mapped").all()
-    assert mapping_path.read_bytes() == before
-    manifest = json.loads((tmp_path / "out" / "build_manifest.json").read_text())
-    assert manifest["mapping"]["version"] == "1.0.0-reviewed"
-    assert manifest["mapping"]["origin"] == "existing_file"
-    assert manifest["mapping"]["skill_taxonomy_status"] == "reviewed"
-    assert outputs["weak_areas"]["mapping_version"].eq("1.0.0-reviewed").all()
-
-
-def test_invalid_reviewed_mapping_is_rejected(tmp_path):
-    (tmp_path / "mappings").mkdir()
-    bad = _mapping_frame(status="reviewed-ish")
-    bad.to_csv(tmp_path / "mappings" / "kc_topic_map.csv", index=False)
-    with pytest.raises(ValueError, match="invalid mapping_status"):
-        _build(tmp_path)
-
-
-def test_unmapped_kcs_get_no_skill_summary(tmp_path):
-    (tmp_path / "mappings").mkdir()
-    mapping = _mapping_frame()
-    mapping.loc[1, ["skill_id", "skill_name", "mapping_status"]] = [None, None, "unmapped"]
-    mapping.to_csv(tmp_path / "mappings" / "kc_topic_map.csv", index=False)
-    outputs = _build(tmp_path)
-    assert outputs["learner_skill_summary"]["kc_count"].tolist() == [1]
-    assert len(outputs["learner_kc_state"]) == 2  # KC rows are never dropped
+    assert prior["concern_status"] == "insufficient_evidence"
+    assert "shared" in prior["reason"]
+    assert trained["concern_status"] == "prediction_based_concern"
 
 
 # ------------------------------------------------------- profile / snapshots
-def test_profile_reports_cold_start_only_knowledge(tmp_path):
-    data_dir = write_collector_csvs(tmp_path / "data")
-    states_path = tmp_path / "knowledge_states.csv"
-    states = _knowledge_rows().iloc[[1]]  # only the cold-start KC
-    states.to_csv(states_path, index=False)
-    pd.DataFrame(
-        {"kc_id": ["KC001", "KC002"], "concepts": [0, 1],
-         "kc_dimension": ["grammar", "grammar"]}
-    ).to_csv(tmp_path / "cm.csv", index=False)
-    outputs = build_complete_learner_model(
-        data_dir=data_dir, output_dir=tmp_path / "out",
-        knowledge_state_file=states_path, concept_map_file=tmp_path / "cm.csv",
-        mappings_dir=tmp_path / "mappings",
-    )
-    english = outputs["learner_profile"].query("source_population == @ENGLISH_POPULATION")
-    assert english.iloc[0]["knowledge_status"] == "cold_start_only"
-
-
 def test_rebuild_with_pinned_timestamp_is_byte_identical(tmp_path):
     stamp = "2026-11-10T00:00:00+00:00"
     _build(tmp_path / "a", generated_at=stamp)
@@ -447,16 +413,49 @@ def test_history_uses_unix_only_completion_times():
     assert row["historical_session_count"] is None  # unknown, not 0
 
 
-def test_per_population_cutoffs(tmp_path):
-    outputs = _build(
-        tmp_path,
-        knowledge_as_of="2023-12-01T00:00:00Z",
-        moodle_as_of="2027-01-01T00:00:00Z",
+def test_revisit_means_returning_to_a_topic_in_a_later_session():
+    from learner_model.behavior import build_behavior
+
+    def event(learner, cmid, session, minute, category="content_view"):
+        return {
+            "learner_id": learner,
+            "course_module_id": cmid,
+            "timestamp": pd.Timestamp("2026-01-01", tz="UTC") + pd.Timedelta(minutes=minute),
+            "event_category": category,
+            "is_learning_event": 1,
+            "session_id": session,
+        }
+
+    activities = pd.DataFrame(
+        {"course_module_id": [1, 2, 3, 4], "topic": ["Unit 1", "Unit 1", "Unit 1", "Unit 2"]}
     )
-    profiles = outputs["learner_profile"]
-    english = profiles[profiles["source_population"] == ENGLISH_POPULATION]
-    moodle = profiles[profiles["source_population"] == MOODLE_POPULATION]
-    assert english["as_of"].eq("2023-12-01T00:00:00+00:00").all()
-    assert moodle["as_of"].eq("2027-01-01T00:00:00+00:00").all()
-    assert len(outputs["learner_kc_state"]) == 2
-    assert not outputs["learner_history"].empty
+    events = pd.DataFrame(
+        [
+            # Learner A: overview, lesson and quiz of Unit 1 in one visit -> no revisit.
+            event("A", 1, "a1", 0), event("A", 2, "a1", 2), event("A", 3, "a1", 5, "quiz_attempt"),
+            # Learner B: Unit 1 in two sessions (revisit), Unit 2 once.
+            event("B", 2, "b1", 0), event("B", 4, "b1", 3), event("B", 3, "b2", 3000, "quiz_attempt"),
+        ]
+    )
+    behavior = build_behavior(events, activities, "2026-01-02T00:00:00+00:00").set_index("learner_id")
+    assert behavior.loc["A", "revisit_rate"] == 0.0
+    assert behavior.loc["B", "revisit_rate"] == 0.5
+
+
+def test_course_progress_counts_every_trackable_activity():
+    events = pd.DataFrame(
+        [{"learner_id": "1", "timestamp_unix": 100, "event_category": "content_view",
+          "is_learning_event": 1, "session_id": "s1", "seconds_since_prev_event": 0}]
+    )
+    activities = pd.DataFrame({"course_module_id": [1, 2, 3, 4, 5], "completion_tracking": [2, 2, 2, 2, 0]})
+    completions = pd.DataFrame(
+        {"learner_id": ["1", "1"], "course_module_id": [1, 2], "completion_state": [2, 3]}
+    )
+    row = build_engagement(
+        events, pd.DataFrame(), completions, activities,
+        generated_at="2026-11-09T00:00:00+00:00",
+    ).iloc[0]
+    # complete_pass counts, complete_fail does not; 4 activities track completion.
+    assert row["completed_activity_count"] == 1
+    assert row["topic_completion_rate"] == 0.5
+    assert row["course_progress"] == 0.25

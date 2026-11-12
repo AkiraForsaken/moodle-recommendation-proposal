@@ -1,0 +1,49 @@
+KC022 | Which sentence is correct? | I often go hiking at the weekend. | I go often hiking at the weekend. | Often I hiking go at the weekend. | I go hiking at often the weekend.
+KC022 | Which sentence is correct? | She is usually at the gym on Mondays. | She usually is at the gym on Mondays. | She is at usually the gym on Mondays. | Usually she at the gym is on Mondays.
+KC022 | Put "never" in the correct place: "He plays video games on weekdays." | He never plays video games on weekdays. | He plays never video games on weekdays. | He plays video games never on weekdays. | Never he plays video games on weekdays.
+KC022 | Which sentence is correct? | We sometimes watch films on Friday nights. | We watch sometimes films on Friday nights. | We watch films on sometimes Friday nights. | We sometimes films watch on Friday nights.
+KC023 | Choose the correct form: "I enjoy ___ in the park." | running | to run | run | ran
+KC023 | Choose the correct form: "She wants ___ the guitar." | to learn | learning | learn | learned
+KC023 | Choose the correct form: "They don't mind ___ for the concert tickets." | waiting | to wait | wait | waited
+KC023 | Choose the correct form: "He decided ___ a photography club." | to join | joining | join | joined
+KC023 | Which sentence is correct? | I prefer reading to watching TV. | I prefer read to watch TV. | I prefer to reading than watching TV. | I prefer reading than to watch TV.
+KC024 | Choose the correct preposition: "The concert starts ___ 8 pm." | at | on | in | by the
+KC024 | Choose the correct preposition: "The match is ___ Saturday." | on | at | in | to
+KC024 | Choose the correct preposition: "We go skiing ___ winter." | in | on | at | to
+KC024 | Choose the correct preposition: "The exhibition opens ___ 5 June." | on | in | at | of
+KC044 | Which activity involves taking pictures with a camera? | Photography | Pottery | Hiking | Knitting
+KC044 | Which activity means walking long distances in the countryside? | Hiking | Painting | Chess | Baking
+KC044 | Which hobby uses brushes and a canvas? | Painting | Cycling | Fishing | Gardening without tools
+KC044 | Growing flowers and vegetables as a hobby is called ___. | gardening | camping | sailing | sketching
+KC045 | Which equipment do you need for tennis? | A racket | A bat | A club | A paddle board
+KC045 | Where do people play football? | On a pitch | On a court | In a ring | On a course
+KC045 | Which sport is played on a course with clubs? | Golf | Swimming | Basketball | Boxing
+KC045 | What do swimmers wear to protect their eyes? | Goggles | Gloves | A helmet | Shin pads
+KC046 | What is a "venue"? | The place where an event happens | The price of a ticket | The main performer | The time an event starts
+KC046 | Where can you see paintings displayed for the public? | At an exhibition | At a rehearsal | At a box office | At a stadium car park
+KC046 | A live musical performance in front of an audience is a ___. | concert | gallery | queue | script
+KC046 | Where do you buy tickets at a theatre? | At the box office | In the dressing room | On the stage | In the orchestra pit
+KC067 | Read the flyer: "Summer Jazz Night. Saturday 12 July. Doors open 7:00 pm, music from 8:00 pm. Riverside Hall." What time can people enter? | 7:00 pm | 8:00 pm | 12:00 pm | 7:30 pm
+KC067 | Read the flyer: "Summer Jazz Night. Saturday 12 July. Doors open 7:00 pm, music from 8:00 pm. Riverside Hall." Where is the event? | Riverside Hall | Jazz Club | City Park | Summer Hall
+KC067 | Read the invitation: "Join us for Mia's birthday picnic, Sunday 2 pm, Greenfield Park, by the lake. Bring a blanket." What should guests bring? | A blanket | A cake | A ticket | A present for the park
+KC067 | Read the flyer: "Art Fair. 3-5 May, 10 am to 6 pm daily. Free entry." How many days does the fair last? | Three | Two | Five | One
+KC068 | Read the timetable: "Pool: Mon-Fri 6:00-21:00, Sat 8:00-18:00, Sun closed." When can you NOT swim? | On Sunday | On Saturday morning | On Monday evening | On Friday at 7:00
+KC068 | Read the timetable: "Yoga: Tue 18:00. Pilates: Wed 19:00. Zumba: Thu 18:30." Which class is on Wednesday? | Pilates | Yoga | Zumba | None
+KC068 | Read the timetable: "Tennis courts: bookings 9:00-20:00. Maximum 1 hour per booking." How long can you book a court for? | One hour | Two hours | All day | Thirty minutes only
+KC068 | Read the timetable: "Junior football: Sat 10:00-11:30, ages 8-12." Who is the session for? | Children aged 8 to 12 | Adults | Teenagers aged 13 to 16 | Everyone
+KC069 | Read the guide: "Step 1: Fold the paper in half. Step 2: Unfold it. Step 3: Fold the two top corners to the centre line." What do you do after unfolding the paper? | Fold the top corners to the centre line | Fold the paper in half | Cut the paper | Glue the corners
+KC069 | Read the guide: "Mix the flour and water. Leave the dough for one hour. Then shape it into a loaf." How long should the dough rest? | One hour | Ten minutes | Overnight | It should not rest
+KC069 | Read the guide: "Before painting, clean the surface and let it dry completely." What must you do first? | Clean the surface | Start painting | Mix the colours | Apply a second coat
+KC069 | Read the guide: "You will need: 2 knitting needles, 1 ball of wool, scissors." Which item is NOT needed? | Glue | Scissors | Wool | Knitting needles
+KC091 | Which sentence best begins a paragraph about a hobby? | My favourite hobby is photography, which I started three years ago. | Hobbies exist. | I have a camera thing. | Photography.
+KC091 | Which sentence adds a relevant detail to a hobby description? | I usually take photos of birds in the park near my house. | My house has a door. | Parks are green. | Birds are animals.
+KC091 | Choose the best sentence explaining why you like a hobby. | I enjoy painting because it helps me relax after work. | Painting is paint. | I enjoy because painting. | It helps, painting, after.
+KC091 | Which sentence is written correctly? | In my free time, I love playing chess with my grandfather. | In my free time, I love play chess with my grandfather. | In free time my, I loving chess play. | I love in my free time chess to playing.
+KC092 | Which informal invitation includes the necessary details? | Come to my barbecue on Saturday at 5 pm at my place - bring a friend! | Barbecue sometime. | You should come to a thing. | I am inviting you formally to an event of unknown date.
+KC092 | Choose the best opening for an informal invitation. | Hi Sam, would you like to come to my birthday party? | Dear Sir, I hereby request your presence. | To whom it may concern, | Sam. Party.
+KC092 | Which sentence asks for a reply? | Let me know if you can make it by Thursday. | It will be fun. | The party is at 7. | There will be food.
+KC092 | Which detail is missing from this invitation? "Movie night at my flat on Friday!" | The time | The day | The place | The event
+KC093 | Which post best summarises a weekend activity? | Spent Sunday hiking in the hills with friends - tired but happy! | Sunday. | Did stuff. | Hills are high.
+KC093 | Choose the best short post. | Great concert last night; the band played all my favourite songs. | Concert happened it was. | Last night band songs. | Music is sound.
+KC093 | Which sentence fits a social post about a weekend? | We tried a pottery class on Saturday and made our first bowls. | Pottery is made of clay. | Classes are on Saturdays. | Bowls can hold soup.
+KC093 | Which post uses the past tense correctly? | I went cycling by the river and took lots of photos. | I go cycling by the river and take lots of photos yesterday. | I going cycling by the river and taking photos. | I goed cycling and taked photos.

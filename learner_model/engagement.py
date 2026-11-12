@@ -10,6 +10,7 @@ ENGAGEMENT_COLUMNS = [
     "estimated_learning_time_seconds",
     "completed_activity_count",
     "topic_completion_rate",
+    "course_progress",
     "last_active_at",
     "days_since_last_activity",
     "observation_start",
@@ -157,6 +158,11 @@ def build_engagement(
             pd.to_numeric(trackable["completion_tracking"], errors="coerce").gt(0)
         ]
 
+    course_trackable_count = (
+        int(trackable["course_module_id"].nunique())
+        if "course_module_id" in trackable and "completion_tracking" in trackable
+        else 0
+    )
     completion_summary = {}
     if (
         completion_tracking_available
@@ -215,6 +221,13 @@ def build_engagement(
             else 0
         )
         rate = float(completed_count / tracked_count) if tracked_count else None
+        # Moodle's own notion of progress: completed / every activity in the
+        # course that tracks completion (not only those the learner touched).
+        progress = (
+            float(completed_count / course_trackable_count)
+            if completed_count is not None and course_trackable_count
+            else None
+        )
         last_active = event.get("last_active_at")
         days_since = None
         cutoff = (
@@ -243,6 +256,7 @@ def build_engagement(
                     else None
                 ),
                 "topic_completion_rate": rate,
+                "course_progress": progress,
                 "last_active_at": last_active,
                 "days_since_last_activity": days_since,
                 "observation_start": event.get("observation_start"),

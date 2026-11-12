@@ -1,0 +1,49 @@
+KC019 | Choose the correct form: "This laptop is ___ than that one." | cheaper | more cheap | cheapest | cheap
+KC019 | Choose the correct form: "The new model is ___ than the old one." | more expensive | expensiver | most expensive | expensive more
+KC019 | Choose the correct form: "This phone is ___ than my old one." | lighter | more light | lightest | light
+KC019 | Which sentence is correct? | This jacket is more comfortable than the blue one. | This jacket is comfortabler than the blue one. | This jacket is more comfortable that the blue one. | This jacket is most comfortable than the blue one.
+KC019 | Choose the correct form: "These shoes are ___ than the ones online." | better | gooder | more good | best
+KC020 | Choose the correct form: "This is the ___ TV in the shop." | cheapest | cheaper | most cheap | more cheap
+KC020 | Choose the correct form: "It is the ___ popular brand in the country." | most | more | much | very
+KC020 | Choose the correct form: "This is the ___ camera I have ever used." | best | better | goodest | most good
+KC020 | Which sentence is correct? | That is the most expensive watch in the store. | That is the expensivest watch in the store. | That is the more expensive watch in the store. | That is most expensive watch than the store.
+KC021 | You are holding a shirt. Which sentence is correct? | How much is this shirt? | How much is those shirt? | How much are this shirt? | How much is these shirt?
+KC021 | You point at shoes on a shelf across the shop. Which sentence is correct? | Can I try those shoes? | Can I try that shoes? | Can I try this shoes? | Can I try these shoe?
+KC021 | Choose the correct word: "___ jeans here are too small for me." | These | This | That | Those there far
+KC021 | You point at one bag far away. Which sentence is correct? | I like that bag over there. | I like this bag over there. | I like those bag over there. | I like these bag over there.
+KC041 | What do you get from the cashier as proof of payment? | A receipt | A refund | A discount | A voucher code only
+KC041 | What is a "refund"? | Money returned to you for a product you take back | A lower price in a sale | A person who takes payment | An extra charge
+KC041 | A shop is selling coats at 30% off. What is this called? | A discount | A deposit | A receipt | A fee
+KC041 | Who takes your payment at the till? | The cashier | The supplier | The customer | The courier
+KC042 | Paying a little each month until the full price is paid is paying ___. | in instalments | in cash | by contactless | by refund
+KC042 | Which payment method needs no card or app? | Cash | Credit card | Contactless | Bank transfer
+KC042 | You tap your card on the reader without entering a PIN. What kind of payment is this? | Contactless | Cash | Instalment | Cheque
+KC042 | With a credit card, you ___. | buy now and pay the bank later | pay with coins and notes | pay before receiving any goods always | never pay interest
+KC043 | A table that is 2 metres long, 1 metre wide and 75 cm high. Which word describes "75 cm"? | height | weight | material | colour
+KC043 | Which word describes what a product is made of? | material | size | width | price
+KC043 | A jacket made from animal skin is made of ___. | leather | cotton | wool | plastic
+KC043 | "Width" tells you ___. | how wide something is | how heavy something is | how old something is | what something is made of
+KC064 | Read the sign: "Buy 2, get 1 free on all T-shirts." You take three T-shirts. How many do you pay for? | Two | Three | One | None
+KC064 | Read the sign: "50% off all shoes. Today only." A pair normally costs $80. What is the price today? | $40 | $50 | $30 | $80
+KC064 | Read the sign: "Spend $100 and save $20." You spend exactly $100. How much do you pay? | $80 | $120 | $100 | $20
+KC064 | Read the sign: "Sale: 25% off winter coats until Sunday." When does the offer end? | On Sunday | On Monday | It never ends | At the end of winter
+KC065 | Read the notice: "Items may be returned within 30 days with the original receipt. Sale items cannot be returned." Can you return a sale item? | No | Yes, within 30 days | Yes, without a receipt | Yes, after 30 days
+KC065 | Read the notice: "Items may be returned within 30 days with the original receipt." What do you need to return an item? | The original receipt | A credit card | The original bag only | A phone number
+KC065 | Read the notice: "Refunds are issued to the original payment method. Exchanges are available in any store." You paid by card. How will you be refunded? | To your card | In cash | By voucher only | You cannot be refunded
+KC065 | Read the notice: "Faulty goods can be returned at any time within one year for repair or replacement." Your kettle breaks after six months. What can you do? | Return it for repair or replacement | Nothing, it is too late | Only get a discount | Only return it within 30 days
+KC066 | Read the table: "Phone A: $300, 64 GB, battery 20 h. Phone B: $350, 128 GB, battery 18 h." Which phone has more storage? | Phone B | Phone A | They are the same | The table does not say
+KC066 | Read the table: "Phone A: $300, 64 GB, battery 20 h. Phone B: $350, 128 GB, battery 18 h." Which phone has the longer battery life? | Phone A | Phone B | They are the same | The table does not say
+KC066 | Read the table: "Kettle X: $25, 1.0 L. Kettle Y: $32, 1.7 L. Kettle Z: $40, 1.7 L." Which is the cheapest kettle that holds 1.7 L? | Kettle Y | Kettle X | Kettle Z | None of them
+KC066 | Read the table: "Laptop 1: 1.2 kg, $900. Laptop 2: 1.8 kg, $700." How much more does Laptop 1 cost? | $200 | $600 | $100 | $900
+KC088 | Which sentence best opens a written refund request? | I am writing to request a refund for a faulty kettle I bought on 2 May. | My kettle is bad, pay me. | Kettle broke. Money. | You sold me rubbish.
+KC088 | Which sentence describes the defect clearly? | The zip broke the first time I used the bag. | The bag is not good in some way. | Something is wrong. | Bag bad zip.
+KC088 | Choose the best closing for a return request. | I look forward to your reply and to receiving a full refund. | Pay now or else. | Bye. | That's all I have to say about bags.
+KC088 | Complete the request: "I would like to ___ the item and receive a replacement." | return | returning | returned | have return
+KC089 | Which sentence compares two products correctly? | The X10 is lighter than the Z5, but its battery is smaller. | The X10 is lighter that the Z5, but battery smaller. | The X10 light than Z5. | X10 and Z5 are phones.
+KC089 | Choose the best comparison sentence. | Both laptops have 16 GB of memory; however, the Pro model is faster. | Both laptops are laptops. | The laptops have things. | Pro is model.
+KC089 | Complete the sentence: "The blue sofa is not ___ comfortable as the grey one." | as | more | than | so much
+KC089 | Which sentence summarises a comparison? | Overall, the cheaper model offers better value for money. | There are two models. | Models have prices. | I looked at both.
+KC090 | Which line in an expense log is written clearly? | Groceries: $85.40 | Food: some money | Things: a lot | $: groceries maybe 80 or 90
+KC090 | Choose the best summary sentence for a monthly budget. | In March, I spent $420 on rent, $180 on food and $60 on transport. | I spent money in March. | March was expensive for things. | Rent, food and transport cost money.
+KC090 | Which total is written correctly in an expense summary? | Total expenditure: $660.00 | Total: lots | All together about some hundreds | $ total 660 is
+KC090 | Which sentence states a budget fact with an explicit amount? | Transport costs rose by $15 compared with February. | Transport was more. | It went up a bit. | February was different.

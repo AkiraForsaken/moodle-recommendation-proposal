@@ -1,0 +1,48 @@
+KC005 | Which greeting is appropriate for a formal email to a client you have not met? | Dear Ms Carter, | Hey Carter! | Hi there, | Yo Ms Carter,
+KC005 | You do not know the recipient's name. Which opening is most appropriate? | Dear Sir or Madam, | Hello you, | Dear Friend, | To whoever,
+KC005 | Which closing is appropriate for a formal business email? | Yours sincerely, | See ya, | Cheers mate, | Love,
+KC005 | Which form of address is correct in a formal email to a man named John Lee? | Dear Mr Lee, | Dear Mr John, | Dear Lee, | Dear Mister,
+KC006 | Choose the correct form: "I ___ in marketing for five years." | have worked | am working since | work | has worked
+KC006 | Choose the correct form: "She ___ three major projects since 2020." | has managed | have managed | managed since | is managing
+KC006 | Choose the correct form: "We ___ the report yet." | haven't finished | didn't finished | haven't finish | don't have finished
+KC006 | Which sentence is correct? | Have you ever led a team? | Did you ever led a team? | Have you ever lead a team? | Has you ever led a team?
+KC007 | Which request is the most polite for the workplace? | Could you send me the file, please? | Send me the file. | You send me the file now. | I want the file.
+KC007 | Choose the correct form: "___ you mind checking this report?" | Would | Do you can | Are | Should be
+KC007 | Complete the polite request: "Would it be possible ___ the meeting to Friday?" | to move | move | moving to | moved
+KC007 | Which sentence is a polite indirect request? | I was wondering if you could review my draft. | Review my draft today. | You must review my draft. | Why don't you review my draft already?
+KC008 | Choose the passive form: "The report ___ yesterday." | was submitted | submitted | has submit | was submit
+KC008 | Choose the passive form: "The invoices ___ every Friday." | are sent | is sent | sends | are send
+KC008 | Which sentence is in the passive voice? | The budget has been approved by the board. | The board has approved the budget. | The board is approving the budget. | The board approves budgets.
+KC008 | Rewrite in the passive: "The team completed the task." | The task was completed by the team. | The task completed the team. | The task is complete the team. | The team was completed by the task.
+KC031 | What is an "agenda"? | A list of topics to be discussed at a meeting | A written record of what was said at a meeting | A person who leads a meeting | An agreement reached by everyone
+KC031 | What are the "minutes" of a meeting? | The written record of what was discussed and decided | The time the meeting lasts | A list of topics to discuss | The people invited
+KC031 | What does "consensus" mean? | General agreement among the group | A strong disagreement | A vote that fails | A meeting schedule
+KC031 | Which word completes the sentence? "Anna will ___ the meeting, so she will lead the discussion." | chair | minute | attend only | postpone
+KC032 | What is a "deadline"? | The latest time by which something must be finished | The first day of a project | A person who manages a project | A meeting about a project
+KC032 | What is a "deliverable"? | A product or result that must be provided at the end of a task | A delay in a project | A project budget | A team member
+KC032 | What is a "milestone" in a project? | An important stage or event in the project's progress | The final invoice | A small mistake | A daily meeting
+KC032 | Which word completes the sentence? "We are behind ___, so we need to work faster." | schedule | deadline | milestone | deliverable
+KC052 | Which subject line best shows the purpose of an email asking to move a meeting? | Request to reschedule Thursday's budget meeting | Hello | Quick question!!! | Meeting
+KC052 | An email has the subject line "Invoice 4471 overdue - payment reminder". What is its main purpose? | To remind the reader to pay an invoice | To thank the reader for a payment | To invite the reader to a meeting | To introduce a new product
+KC052 | Which subject line is the least effective? | Important | Agenda for Monday's sales meeting | Application for Marketing Assistant position | Change of office address from 1 June
+KC052 | An email subject reads "Action required: submit timesheets by Friday". What should the reader do? | Send in their timesheets before Friday | Wait for more information | Attend a meeting on Friday | Nothing; it is for information only
+KC053 | Read the memo: "All staff must complete the online safety course by 15 March. Managers should confirm completion to HR by 20 March." What must all staff do? | Complete the safety course by 15 March | Confirm completion to HR by 20 March | Attend a meeting on 15 March | Email their manager on 20 March
+KC053 | Read the memo: "All staff must complete the online safety course by 15 March. Managers should confirm completion to HR by 20 March." What is the managers' deadline? | 20 March | 15 March | 1 March | There is no deadline
+KC053 | Read the memo: "The office will close at 3 pm on Friday for maintenance. Please save your work and log off by 2:45 pm." What is the action item? | Save work and log off by 2:45 pm | Come to the office at 3 pm | Start maintenance on Friday | Work from the office until 5 pm
+KC053 | Read the memo: "Expense claims for May must be submitted through the portal. Paper forms will no longer be accepted." What has changed? | Paper expense forms are not accepted any more | Expense claims are cancelled for May | Claims must be sent by post | The portal is closed
+KC054 | Which message has a formal register? | I would be grateful if you could confirm receipt of this document. | Got it, thanks a lot! | Can u check this asap? | No worries, see you later.
+KC054 | "Hey, running late - start without me!" How would you describe the tone? | Informal | Formal | Legal | Academic
+KC054 | Which sentence is most suitable for a message to a senior manager you do not know well? | Thank you for your time; I look forward to your reply. | Thanks a bunch, talk soon! | Cheers, catch you later. | OK, bye for now!
+KC054 | Which feature shows that a workplace message is informal? | Contractions and abbreviations such as "can't" and "FYI" | Full sentences with titles such as "Dr" | A formal closing such as "Yours faithfully" | Complete, polite request forms
+KC076 | Which opening sentence is best for a business inquiry email? | I am writing to enquire about your training courses. | I want to know stuff about courses. | Hey, tell me about your courses. | Courses?
+KC076 | Which opening sentence is clear and professional? | I am writing to request a quotation for 50 office chairs. | I need chairs, how much? | You sell chairs, right? | This is about chairs and things.
+KC076 | Choose the best opening for an email following up on a meeting. | Thank you for meeting with me yesterday to discuss the project. | So about yesterday. | Yesterday was good, wasn't it. | Me again!
+KC076 | Which opening states the purpose of the email most clearly? | I am writing to confirm our appointment on 12 May at 10 am. | I hope this email finds you. | There is something I wanted to say. | As you know, things happen.
+KC077 | Which sentence correctly refers to an attachment in a formal email? | Please find the report attached. | I attach you the report here. | The report is in attach. | See attach for report please.
+KC077 | Which sentence is the most professional? | I have attached my CV for your consideration. | My CV is stuck to this email. | Here's my CV, take a look. | CV attached lol.
+KC077 | Choose the best sentence. | The attached spreadsheet shows the sales figures for March. | The spreadsheet attach shows the sales figures for March. | Attached spreadsheet showing sales figures March. | The spreadsheet which attaching shows March.
+KC077 | Complete the sentence: "Please ___ the attached agenda before the meeting." | review | reviewing | to reviewed | you review of
+KC078 | Which bullet point is a clear, concise action item? | Send the revised budget to Finance by Friday. | The budget, which was revised, could maybe be sent at some point. | Budget. | We talked about sending the budget to someone.
+KC078 | Which action item starts with an imperative verb? | Update the client list. | The client list is old. | Updating the client list would be nice. | Client list updates.
+KC078 | Choose the best action item for an executive update. | Confirm the venue for the June conference. | It might be a good idea if the venue was confirmed. | Venue confirmation is something that matters to us. | The June conference has a venue issue that people know about.
+KC078 | Which list of action items is written in a parallel form? | Review the contract; Call the supplier; Book the meeting room | Review the contract; Calling the supplier; The meeting room | Contract review; Call the supplier; To book the meeting room | Reviewing; Supplier call; Book

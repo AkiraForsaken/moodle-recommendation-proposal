@@ -1,4 +1,4 @@
-"""Column contracts for Milestone 4 outputs."""
+"""Column contracts for the learner-model outputs."""
 
 PROFILE_COLUMNS = [
     "learner_id",
@@ -8,6 +8,8 @@ PROFILE_COLUMNS = [
     "as_of",
     "source_population",
     "knowledge_status",
+    "knowledge_phase",
+    "knowledge_model",
     "skills_status",
     "weak_areas_status",
     "behavior_status",
@@ -45,28 +47,14 @@ WEAK_AREA_COLUMNS = [
     "generated_at",
 ]
 
-# TOPIC_STATE_COLUMNS = [
-#     "learner_id",
-#     "topic",
-#     "sequence_position",
-#     "activity_views",
-#     "lesson_sessions",
-#     "question_interactions",
-#     "quiz_attempts",
-#     "best_score",
-#     "latest_score",
-#     "score_trend",
-#     "quiz_time",
-#     "lesson_time_estimate",
-#     "completed_activities",
-#     "topic_completion_pct",
-#     "mastery_level",
-#     "last_activity",
-#     "p_mastery",
-#     "evidence_count",
-#     "model_name",
-#     "model_version",
-#     "source_dataset",
-#     "state_status",
-#     "generated_at",
-# ]
+KC_SKILL_MAP_COLUMNS = [
+    "kc_id",
+    "kc_name",
+    "kc_dimension",
+    "skill_id",
+    "skill_name",
+    "topic",
+    "mapping_status",
+    "mapping_source",
+    "mapping_version",
+]

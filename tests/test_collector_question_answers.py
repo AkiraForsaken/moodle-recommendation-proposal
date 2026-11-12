@@ -101,11 +101,42 @@ def test_missing_crosswalk_is_reported_without_breaking_other_exports(
 
 
 def test_roster_includes_active_enrolments_and_applies_role_filter(tmp_path, monkeypatch):
-    cursor = FakeCursor([(7, 100, 0), (8, 100, 0), (9, 100, 0)])
+    cursor = FakeCursor([(7, 100, 0, ""), (8, 100, 0, None), (9, 100, 0, "S-9")])
+    monkeypatch.setattr(question_events, "OUTPUT_DIR", tmp_path)
     monkeypatch.setattr(question_events, "write_csv", lambda *_: None)
+    stale = tmp_path / "simulation_manifest.json"
+    stale.write_text("{}", encoding="utf-8")
+    stale_plan = tmp_path / "simulation_plan_manifest.json"
+    stale_plan.write_text("{}", encoding="utf-8")
 
     learner_ids = question_events.collect_learner_roster(cursor, 5, {7, 9})
 
     assert learner_ids == ["7", "9"]
     assert cursor.params == (5,)
     assert "user_enrolments" in cursor.query
+    # Only real learners: a manifest left by an earlier simulated export is removed.
+    assert not stale.exists()
+    assert not stale_plan.exists()
+
+
+def test_export_with_simulated_accounts_is_labelled_simulated(tmp_path, monkeypatch, capsys):
+    cursor = FakeCursor([(7, 100, 0, ""), (8, 100, 0, "SIM-0001"), (9, 100, 0, "SIM-0002")])
+    monkeypatch.setattr(question_events, "OUTPUT_DIR", tmp_path)
+    monkeypatch.setattr(question_events, "write_csv", lambda *_: None)
+
+    question_events.collect_learner_roster(cursor, 5, None)
+
+    import json
+
+    manifest = json.loads((tmp_path / "simulation_manifest.json").read_text())
+    assert manifest["simulated"] is True
+    assert manifest["simulated_learners"] == 2
+    assert manifest["real_learners"] == 1
+    assert "labelled 'simulated'" in capsys.readouterr().out
+
+
+def test_taking_a_quiz_is_not_counted_as_reviewing_it():
+    from collector.events import classify_event
+
+    assert classify_event(r"\mod_quiz\event\attempt_viewed", "attempt", "viewed") == "quiz_attempt"
+    assert classify_event(r"\mod_quiz\event\attempt_reviewed", "attempt", "reviewed") == "quiz_review"

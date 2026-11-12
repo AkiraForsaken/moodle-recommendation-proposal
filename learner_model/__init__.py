@@ -1,4 +1,4 @@
-"""Population-separated learner modeling pipeline."""
+"""Learner profiles built from one course's own Moodle evidence."""
 
 __all__ = ["main"]
 

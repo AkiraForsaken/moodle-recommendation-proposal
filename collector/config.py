@@ -37,6 +37,11 @@ INCLUDE_ROLES = os.getenv("MOODLE_INCLUDE_ROLES", "student")
 OUTPUT_DIR = Path(
     os.getenv("MOODLE_OUTPUT_DIR", Path(__file__).resolve().parent.parent / "data")
 )
+# By default the question-to-KC mapping is derived from Moodle question
+# categories (collect_course_mappings.py) and written to the output directory.
+# Setting MOODLE_QUESTION_KC_MAPPING points at a hand-curated crosswalk instead;
+# that file is then the source of truth and is never rewritten.
+QUESTION_KC_MAPPING_IS_OVERRIDE = bool(os.getenv("MOODLE_QUESTION_KC_MAPPING"))
 QUESTION_KC_MAPPING_FILE = Path(
     os.getenv(
         "MOODLE_QUESTION_KC_MAPPING",

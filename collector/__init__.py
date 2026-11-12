@@ -7,15 +7,24 @@ Outputs (written to ../data relative to this package):
     learning_events.csv         filtered, context-resolved, session-tagged events
     learning_sessions.csv       one row per continuous learning session
     quiz_attempts.csv           finished non-preview attempts, normalized + duration
+    kc_catalog.csv              course Knowledge Components (from question categories)
+    moodle_question_kc_map.csv  question-bank entry -> KC (versioned)
+    kc_topic_map.csv            KC -> course topic (from quiz usage)
+    kc_activity_map.csv         KC -> learning resource (course-module ID number
+                                = kc_id) and practice quizzes
     question_answer_events.csv  graded item responses with explicit item -> KC mapping
     question_answer_mapping_report.csv mapped / unmapped KT response counts
     course_modules_completion.csv   activity completion states (may be empty)
 
 Design notes relevant to the thesis:
   * No quiz IDs are hard-coded. Topics come from Moodle course sections.
-  * Question responses use one row per completed, graded item attempt. A
-    versioned question-bank-entry-to-KC crosswalk is required; unmapped rows
-    are counted and excluded rather than guessed from labels.
+  * Knowledge Components belong to the course, not to any benchmark dataset:
+    a question category with an idnumber is a KC and its parent category is
+    the KC dimension (collect_course_mappings.py). MOODLE_QUESTION_KC_MAPPING
+    may point at a hand-curated crosswalk instead.
+  * Question responses use one row per completed, graded item attempt.
+    Questions without a KC are counted and excluded rather than guessed from
+    labels.
   * Partial credit is retained as a raw fraction and converted to binary
     correctness only at full credit for the KT event stream.
   * Events are selected from a documented whitelist and classified into
@@ -41,6 +50,7 @@ notebooks); main() for the full connect -> collect -> summarise run.
 
 from .collect_activities import collect_activity_catalog
 from .collect_completion import collect_course_modules_completion
+from .collect_course_mappings import collect_course_mappings
 from .collect_events import collect_learning_events
 from .collect_quizzes import collect_quiz_attempts
 from .collect_question_answers import (
@@ -87,6 +97,9 @@ def run_collection(cursor):
 
     print("\nCollecting quiz attempts...")
     collect_quiz_attempts(cursor, course_id, catalog_rows, user_filter)
+
+    print("\nCollecting course KC mappings...")
+    collect_course_mappings(cursor, course_id, catalog_rows)
 
     print("\nCollecting scored question-answer events...")
     collect_question_answer_events(cursor, course_id, user_filter)

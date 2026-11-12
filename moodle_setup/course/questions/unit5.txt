@@ -1,0 +1,49 @@
+KC016 | Choose the correct word: "Is there ___ milk in the fridge?" | any | many | a few | several
+KC016 | Choose the correct word: "How ___ sugar do you take in your tea?" | much | many | few | several
+KC016 | Choose the correct word: "How ___ apples do we need for the pie?" | many | much | little | any of
+KC016 | Choose the correct word: "I'd like ___ water, please." | some | many | a few | much of
+KC016 | Which sentence is correct? | There aren't many tomatoes left. | There aren't much tomatoes left. | There isn't many tomatoes left. | There aren't some tomatoes left.
+KC017 | Which is the most polite way to order? | I would like the grilled salmon, please. | Give me the grilled salmon. | I want salmon now. | Salmon.
+KC017 | Complete the order: "I'll ___ the tomato soup to start." | have | having | to have | had
+KC017 | Choose the correct form: "___ I have the bill, please?" | Could | Do | Am | Would to
+KC017 | Which sentence is correct and polite? | We'd like a table for two, please. | We like a table for two now. | We'd like table two for. | We want table, two.
+KC018 | Choose the correct form: "This curry is ___ than the one I had yesterday." | spicier | more spicy than | spiciest | spicy
+KC018 | Choose the correct form: "The large pizza is ___ expensive than the medium one." | more | most | much | very
+KC018 | Choose the correct form: "Her soup tastes ___ than mine." | better | gooder | more good | best
+KC018 | Which sentence is correct? | The portions here are bigger than at the other cafe. | The portions here are more big than at the other cafe. | The portions here are biggest than at the other cafe. | The portions here are bigger that at the other cafe.
+KC038 | Food cooked over direct heat on a metal rack is ___. | grilled | boiled | steamed | raw
+KC038 | Vegetables cooked using the vapour from boiling water are ___. | steamed | fried | roasted | baked
+KC038 | Meat cooked in an oven with a little oil is ___. | roasted | boiled | steamed | poached in water
+KC038 | Which cooking method uses a lot of hot oil? | deep-frying | steaming | boiling | baking
+KC039 | What do you ask for when you want to pay in a restaurant? | The bill | The menu | The recipe | The order
+KC039 | What is a "gratuity"? | A tip given for good service | A free dessert | A booking fee | A type of menu
+KC039 | Who brings your food to the table in a restaurant? | The server | The cashier | The host of a party | The supplier
+KC039 | What is a "receipt"? | A printed record that you have paid | A list of dishes and prices | A booking for a table | A cooking instruction
+KC040 | A person who eats no animal products at all is ___. | vegan | vegetarian only on weekends | gluten-free | allergic
+KC040 | "Gluten-free" food does not contain ___. | wheat proteins | sugar | meat | milk
+KC040 | If you have a nut allergy, you ___. | become ill when you eat nuts | prefer the taste of nuts | eat nuts every day | are a vegetarian
+KC040 | Which person does not eat meat or fish but may eat eggs and dairy? | A vegetarian | A vegan | A butcher | A carnivore
+KC061 | Read the menu: "Garden Pasta - penne, tomato, basil, garlic, olive oil." Which ingredient is in the dish? | Basil | Chicken | Cream | Cheese
+KC061 | Read the menu: "Thai Green Curry - chicken, coconut milk, green chilli, peanuts, rice." Who should avoid this dish? | Someone allergic to nuts | Someone who dislikes beef | Someone who avoids pork | Someone who loves rice
+KC061 | Read the menu: "House Salad (V) - lettuce, cucumber, feta cheese, olives." Is this dish suitable for a vegan? | No, because it contains cheese | Yes, because it is marked V | Yes, because it has no meat | No, because it contains olives
+KC061 | Read the menu: "Fish Tacos - cod, corn tortilla, lime, cabbage, yoghurt sauce." What kind of fish is used? | Cod | Salmon | Tuna | Trout
+KC062 | Read the label: "Contains: milk, soy. May contain traces of nuts." Which statement is true? | The product definitely contains milk. | The product definitely contains nuts. | The product is dairy-free. | The product contains no allergens.
+KC062 | Read the label: "Gluten-free. Suitable for vegetarians. Not suitable for vegans." Who should NOT eat this product? | Vegans | Vegetarians | People avoiding gluten | Everyone can eat it
+KC062 | Read the label: "Allergens: eggs, wheat. Produced in a factory that handles sesame." What is the warning about sesame? | The product might contain small amounts of sesame. | Sesame is the main ingredient. | The product is sesame-free guaranteed. | Sesame has been removed.
+KC062 | Read the label: "Keep refrigerated. Once opened, consume within 3 days." What should you do after opening? | Eat it within three days | Freeze it for three months | Keep it at room temperature | Throw it away immediately
+KC063 | Read the review: "Tasty food and friendly staff, but we waited 50 minutes for our main course." What was the problem? | Slow service | Rude staff | Bad food | High prices
+KC063 | Read the review: "Great value - two courses for under $15, though the dining room is noisy." What does the reviewer say about the price? | It is good value | It is too expensive | It is not mentioned | It changed recently
+KC063 | Read the review: "The steak was overcooked and the waiter forgot our drinks. We won't return." What is the overall opinion? | Negative | Positive | Mixed but mostly positive | Neutral
+KC063 | Read the review: "Lovely terrace, generous portions, and the staff remembered my allergy. Five stars." What does the reviewer praise about the service? | The staff were careful about the allergy | The service was fast | The waiter was funny | The staff gave a discount
+KC085 | Which sentence is a clear written dietary request? | I am allergic to shellfish; could you confirm which dishes are safe for me? | No shellfish or else. | Shellfish bad for me you know. | I maybe don't want some fish things.
+KC085 | Choose the best sentence for a booking note. | Please note that one guest requires a gluten-free meal. | One guest is gluten. | Gluten no for one. | We have a guest and gluten.
+KC085 | Which request is polite and specific? | Would it be possible to prepare the pasta without cheese, as I am vegan? | Make it vegan. | I don't eat stuff. | No cheese!!!
+KC085 | Complete the request: "Could you please let the chef know that I ___ dairy products?" | cannot eat | cannot to eat | am not eat | don't eating
+KC086 | Which written order is clear and polite? | I would like one chicken salad and a bottle of sparkling water, please. | Chicken salad water. | I want food and drink. | One of those and that.
+KC086 | Complete the order message: "Could I ___ two cappuccinos to take away, please?" | have | having | to have | has
+KC086 | Choose the best sentence for an online order note. | Please deliver one large vegetable pizza to 14 Elm Street at 7 pm. | Pizza big at home later. | Deliver pizza you. | 7 pm pizza veg Elm.
+KC086 | Which line fits a written dialogue between a customer and a waiter? | "I'll have the soup of the day, please." | "Soup of the day is having me." | "I soup the day." | "Having soup I please."
+KC087 | Which sentence is the best opening for a restaurant review? | We had dinner at Luna Bistro last Friday and the food was excellent. | Dinner is a meal. | Luna Bistro is a restaurant with a door. | I eat food.
+KC087 | Which sentence gives specific feedback? | The service was slow, but the lamb was tender and full of flavour. | It was okay or something. | Things happened there. | Food was food.
+KC087 | Choose the best concluding sentence for a review. | I would happily return and recommend it to friends. | The restaurant has tables. | We paid and left. | It was a place.
+KC087 | Which sentence evaluates the dining experience? | The dessert was disappointing because it was far too sweet. | We ordered dessert. | The dessert came on a plate. | Dessert is served after the main course.

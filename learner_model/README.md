@@ -1,53 +1,41 @@
-# Learner-model research pipeline
+# Learner model
 
-The current implementation builds a population-separated learner model with
-knowledge states, skill summaries, explainable weak-area screening, Moodle
-behavior and engagement summaries, and learner profiles.
+Builds one learner profile per enrolled learner of a Moodle course, from that
+course's own data: knowledge states from `knowledge_engine`, and behavior,
+engagement and history from the Moodle collector. No benchmark dataset is an
+input.
 
 ## Build
 
-From the repository root, use an environment with the packages in
-`requirements.txt` installed:
+From the repository root:
 
 ```bash
-python -m learner_model.builder
+python moodle-collector.py              # Moodle -> data/*.csv
+python -m knowledge_engine estimate     # data/ -> learner-by-KC knowledge states
+python -m learner_model.builder         # -> learner_model/artifacts/learner_model/
 ```
 
-Equivalent entry point:
+Options: `--data-dir`, `--knowledge-states`, `--output-dir`, `--as-of` (Unix
+seconds or a timezone-aware ISO datetime) and `--generated-at` (pin the
+generation time for byte-identical rebuilds).
 
-```bash
-python learner-model.py
-```
+The knowledge-state file is optional. Without it, profiles are still built and
+the knowledge, skills and weak-area components are `unavailable`.
 
-The default build reads English benchmark AKT states, the concept map, versioned
-KC mappings, and Moodle collector exports. If Moodle-specific KT states exist,
-they are joined only to Moodle learner IDs; the English benchmark model remains
-a separate population. The builder writes CSV components, a build manifest, and a validation report under
-`learner_model/artifacts/complete_learner_model/`.
+## What a new learner gets
 
-Use `--data-dir`, `--knowledge-states`, `--concept-map`, `--mappings-dir`, and
-`--output-dir` to select inputs and outputs. `--as-of` sets both population
-cutoffs; `--knowledge-as-of` and `--moodle-as-of` override them independently.
-Cutoffs accept Unix seconds or timezone-aware ISO datetimes. `--generated-at`
-pins the generation timestamp for reproducible output.
+A learner who is enrolled but has done nothing still has a profile:
 
-See [the learner-model data contract](learner_model/docs/learner_model_data_contract.md)
-and [component definitions](learner_model/docs/component_definitions.md) for
-semantics, boundaries, and output schemas.
+- knowledge: one row per course KC, `cold_start` (the shared prior),
+  `knowledge_status = cold_start_only`
+- behavior, engagement, history: `no_observations`
+- weak areas: `insufficient_evidence` for every KC, never a fabricated concern
 
-## Current scope
+See [the data contract](docs/learner_model_data_contract.md),
+[component definitions](docs/component_definitions.md) and
+[KC and skill mapping](docs/mapping_documentation.md).
 
-- English benchmark profiles remain separate from Moodle profiles; matching
-  identifier strings are not treated as proof of identity. Moodle knowledge is
-  included only when produced by the Moodle-specific training/inference path.
-- `predicted_correctness` is a question-answering prediction, not a mastery
-  probability.
-- Moodle empty-history predictions are explicitly cold-start model priors, not
-  individual evidence or mastery.
-- Topic-level recommendation/API integrations that depended on the retired
-  single-CSV model are deferred until they are designed for these component
-  outputs and their population boundaries.
+## Not in this package
 
-The old single-CSV learner model, quiz-level BKT/score-band mastery path, API
-bridge, and recommender implementation have been retired. The current component
-outputs are not wired to the retired Moodle-facing integration.
+Recommendation and the Moodle UI are not built yet. They will read the
+profile outputs above; this package does not depend on them.

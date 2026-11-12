@@ -2,7 +2,6 @@
 
 import pandas as pd
 
-
 BEHAVIOR_COLUMNS = [
     "learner_id",
     "observation_start",
@@ -47,7 +46,9 @@ def build_behavior(events, activities, generated_at):
     required = {"learner_id", "timestamp", "event_category"}
     missing = required.difference(events.columns)
     if missing:
-        raise ValueError(f"Learning events are missing behavior fields: {sorted(missing)}")
+        raise ValueError(
+            f"Learning events are missing behavior fields: {sorted(missing)}"
+        )
 
     frame = events.copy()
     frame["timestamp"] = _event_timestamps(frame)
@@ -68,7 +69,12 @@ def build_behavior(events, activities, generated_at):
         learning = pd.to_numeric(frame["is_learning_event"], errors="coerce").eq(1)
     else:
         learning = category.isin(
-            ["content_view", "lesson_interaction", "question_interaction", "quiz_attempt"]
+            [
+                "content_view",
+                "lesson_interaction",
+                "question_interaction",
+                "quiz_attempt",
+            ]
         )
     frame["_learning"] = learning
     frame["_practice"] = category.isin(["quiz_attempt", "question_interaction"])
@@ -76,18 +82,25 @@ def build_behavior(events, activities, generated_at):
 
     rows = []
     for learner_id, group in frame.groupby("learner_id", sort=False):
-        sessions = group.groupby("_session_id", dropna=False).agg(
-            session_start=("timestamp", "min"),
-            session_end=("timestamp", "max"),
-        ).sort_values("session_start")
+        sessions = (
+            group.groupby("_session_id", dropna=False)
+            .agg(
+                session_start=("timestamp", "min"),
+                session_end=("timestamp", "max"),
+            )
+            .sort_values("session_start")
+        )
         session_intervals = sessions["session_start"].diff().dt.total_seconds().dropna()
         topics = group.dropna(subset=["topic"])
-        topic_views = topics[category.loc[topics.index].eq("content_view")].groupby(
-            "topic"
-        ).size()
+        # A topic is revisited when the learner comes back to it in a later
+        # session. Several views within one visit (overview, lesson, quiz)
+        # are one visit, not a revisit.
+        topic_sessions = (
+            topics[topics["_learning"]].groupby("topic")["_session_id"].nunique()
+        )
         topic_count = int(topics["topic"].nunique())
         revisit_rate = (
-            float(topic_views.gt(1).sum() / topic_count) if topic_count else None
+            float(topic_sessions.gt(1).sum() / topic_count) if topic_count else None
         )
         rows.append(
             {
@@ -96,7 +109,9 @@ def build_behavior(events, activities, generated_at):
                 "observation_end": group["timestamp"].max().isoformat(),
                 "session_count": int(sessions.shape[0]),
                 "average_session_interval_seconds": (
-                    float(session_intervals.mean()) if not session_intervals.empty else None
+                    float(session_intervals.mean())
+                    if not session_intervals.empty
+                    else None
                 ),
                 "average_session_duration_seconds": float(
                     (sessions["session_end"] - sessions["session_start"])

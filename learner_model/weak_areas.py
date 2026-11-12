@@ -13,6 +13,12 @@ Rules (first match wins), applied per learner-KC row:
 A high prediction is never promoted to a "mastery" label: with limited direct
 evidence the row stays insufficient_evidence. Cold-start rows can therefore only
 be prediction_based_concern or insufficient_evidence, never evidence-based.
+
+Rule 3 does not apply to a Phase 1 cold-start row. There the "prediction" is
+the fixed prior that every learner without answers shares, so flagging it
+would mark every unseen KC of every new learner as a concern. Such rows are
+insufficient_evidence. A cold-start prediction from a trained model (Phase 3)
+does vary by KC and may still raise a prediction_based_concern.
 """
 
 import pandas as pd
@@ -20,8 +26,8 @@ import pandas as pd
 from .config import (
     LOW_OBSERVED_ACCURACY,
     LOW_PREDICTED_CORRECTNESS,
-    MAPPING_VERSION,
     MIN_ATTEMPTS_FOR_EVIDENCE_CONCERN,
+    UNVERSIONED_MAPPING,
 )
 from .schemas import WEAK_AREA_COLUMNS
 
@@ -33,7 +39,7 @@ CONCERN_STATUSES = (
 )
 
 
-def _classify(attempts, observed, predicted):
+def _classify(attempts, observed, predicted, is_shared_prior=False):
     low_pred = f"{LOW_PREDICTED_CORRECTNESS:.2f}"
     if attempts >= MIN_ATTEMPTS_FOR_EVIDENCE_CONCERN and observed is not None:
         if observed < LOW_OBSERVED_ACCURACY:
@@ -42,7 +48,9 @@ def _classify(attempts, observed, predicted):
                 f"across {attempts} direct attempts"
             )
             if predicted is not None and predicted < LOW_PREDICTED_CORRECTNESS:
-                reason += f"; predicted correctness {predicted:.3f} is also below {low_pred}"
+                reason += (
+                    f"; predicted correctness {predicted:.3f} is also below {low_pred}"
+                )
             return "evidence_based_concern", reason
         return (
             "no_current_concern",
@@ -55,6 +63,12 @@ def _classify(attempts, observed, predicted):
         if attempts == 0
         else f"only {attempts} direct attempt(s), fewer than {MIN_ATTEMPTS_FOR_EVIDENCE_CONCERN}"
     )
+    if is_shared_prior:
+        return (
+            "insufficient_evidence",
+            "No answers on this KC yet; the estimate is the cold-start prior shared "
+            "by every new learner, not a signal about this learner",
+        )
     if predicted is not None and predicted < LOW_PREDICTED_CORRECTNESS:
         return (
             "prediction_based_concern",
@@ -62,7 +76,10 @@ def _classify(attempts, observed, predicted):
             "Model prediction only: not verified difficulty and not a mastery estimate",
         )
     if predicted is None:
-        return "insufficient_evidence", f"{basis[0].upper()}{basis[1:]} and no prediction available"
+        return (
+            "insufficient_evidence",
+            f"{basis[0].upper()}{basis[1:]} and no prediction available",
+        )
     return (
         "insufficient_evidence",
         f"{basis[0].upper()}{basis[1:]}; predicted correctness {predicted:.3f} is not below "
@@ -70,8 +87,14 @@ def _classify(attempts, observed, predicted):
     )
 
 
-def identify_weak_areas(states, generated_at, mapping_version=MAPPING_VERSION):
-    """Classify KC-level concerns without interpreting predictions as mastery."""
+def identify_weak_areas(
+    states, generated_at, mapping_version=UNVERSIONED_MAPPING, kc_names=None
+):
+    """Classify KC-level concerns without interpreting predictions as mastery.
+
+    ``kc_names`` maps kc_id to the course's KC name; without it the id is used.
+    """
+    kc_names = kc_names or {}
     rows = []
     for state in states.itertuples(index=False):
         attempts = int(getattr(state, "attempt_count", 0) or 0)
@@ -79,14 +102,25 @@ def identify_weak_areas(states, generated_at, mapping_version=MAPPING_VERSION):
         observed = getattr(state, "observed_accuracy", None)
         predicted = getattr(state, "predicted_correctness", None)
         observed = None if observed is None or pd.isna(observed) else float(observed)
-        predicted = None if predicted is None or pd.isna(predicted) else float(predicted)
-        concern_status, reason = _classify(attempts, observed, predicted)
+        predicted = (
+            None if predicted is None or pd.isna(predicted) else float(predicted)
+        )
+        phase = getattr(state, "estimator_phase", None)
+        is_shared_prior = (
+            attempts == 0
+            and phase is not None
+            and not pd.isna(phase)
+            and int(phase) == 1
+        )
+        concern_status, reason = _classify(
+            attempts, observed, predicted, is_shared_prior
+        )
         rows.append(
             {
                 "learner_id": state.learner_id,
                 "entity_type": "kc",
                 "entity_id": state.kc_id,
-                "entity_name": state.kc_id,
+                "entity_name": kc_names.get(str(state.kc_id), state.kc_id),
                 "concern_status": concern_status,
                 "observed_accuracy": observed,
                 "predicted_correctness": predicted,
