@@ -1,0 +1,50 @@
+KC013 | Choose the correct modal: "Journalists ___ check their facts before publishing." | must | might | can to | would
+KC013 | Choose the correct form: "You ___ pay to read this article; it is free." | don't have to | mustn't | should to | haven't to
+KC013 | Which sentence gives advice? | You should read more than one news source. | You must to read more than one news source. | You have read more than one news source. | You should reading more than one news source.
+KC013 | Choose the correct form: "Reporters ___ to protect their sources." | have | must | should | ought
+KC013 | Which sentence expresses a prohibition? | You mustn't share other people's photos without permission. | You don't have to share other people's photos. | You might share other people's photos. | You could share other people's photos.
+KC014 | Choose the correct modal: "The story ___ be true, but I'm not sure." | might | must to | has | is able
+KC014 | Which sentence expresses possibility? | The film could win an award this year. | The film must win an award this year. | The film wins an award this year. | The film has to win an award this year.
+KC014 | Choose the correct form: "This news ___ not be accurate." | may | can to | ought | is
+KC014 | Which sentence shows the speaker is uncertain? | She may be right about the new policy. | She is right about the new policy. | She must be right about the new policy. | She has been right about the new policy.
+KC015 | Choose the correct sentence. | I think that social media is useful. | I think social media useful is. | I am think that social media is useful. | I thinking that social media is useful.
+KC015 | Choose the correct form: "Many experts ___ that screen time affects sleep." | believe | are believe | believing | believes
+KC015 | Which sentence introduces an opinion correctly? | I don't think the article is fair. | I think the article isn't not fair. | I am not think the article is fair. | I think not the article is fair.
+KC015 | Choose the correct form: "The report suggests that people ___ less news than before." | read | reading | to read | are read
+KC015 | Which sentence is correct? | She believes that newspapers are still important. | She believe that newspapers are still important. | She is believing newspapers still important. | She believes newspapers still important are.
+KC035 | Which phrase introduces a personal opinion? | In my view, | As a result, | For example, | In addition,
+KC035 | Which phrase means the same as "I think"? | From my perspective, | On the other hand, | In conclusion, | Nevertheless,
+KC035 | Complete the sentence: "___, the documentary was too long." | As far as I'm concerned | Despite | Therefore | Such as
+KC035 | Which expression signals that the speaker is giving an opinion, not a fact? | It seems to me that | It is a fact that | Statistics show that | According to the law,
+KC036 | What is a "headline"? | The title of a news story | The last paragraph of an article | A photo in a newspaper | An advertisement
+KC036 | What is an "editorial"? | An article giving the opinion of the newspaper | A weather report | A list of TV programmes | A paid advertisement
+KC036 | What is a "press release"? | An official statement given to the media | A printed newspaper | A journalist's salary | A TV studio
+KC036 | Who presents the news on television? | A news anchor | An editor's assistant | A subscriber | A sponsor
+KC037 | Choose the best connector: "The film had great reviews. ___, I found it boring." | However | Therefore | Moreover | For instance
+KC037 | Choose the best connector: "Online news is fast. ___, it is not always accurate." | On the other hand | As a result | In addition | For example
+KC037 | Which word shows contrast? | Nevertheless | Furthermore | Consequently | Similarly
+KC037 | Choose the best connector: "Some people read newspapers, ___ others prefer podcasts." | whereas | because | so | therefore
+KC058 | Read: "This shameful decision ignores every expert and puts our children at risk." What is the author's tone? | Critical | Neutral | Humorous | Grateful
+KC058 | Read: "The council voted 7-3 to approve the plan. Work will begin in May." What is the author's tone? | Objective | Angry | Persuasive | Sarcastic
+KC058 | Read: "We must act now. Sign the petition today and help save our local library!" What is the author's purpose? | To persuade | To entertain | To describe | To apologise
+KC058 | Read: "What a brilliant, moving film - easily the best of the year." What is the author's stance? | Strongly positive | Strongly negative | Neutral | Uncertain
+KC059 | Which sentence is a fact? | The newspaper was founded in 1921. | It is the best newspaper in the country. | Its articles are too long. | Everyone should read it.
+KC059 | Which sentence is an opinion? | Reality shows are a waste of time. | The show is broadcast on Fridays. | The show has 2 million viewers. | The first episode aired in 2019.
+KC059 | Read: "The app has 10 million users. I believe it is addictive." Which part is an opinion? | "I believe it is addictive." | "The app has 10 million users." | Both sentences | Neither sentence
+KC059 | Which word often signals an opinion? | should | was | has | in 2020
+KC060 | Read: "Although streaming is convenient, cinemas offer an experience no living room can match. We should protect them." What is the main claim? | Cinemas are worth protecting. | Streaming is inconvenient. | Living rooms are too small. | Films are too expensive.
+KC060 | Read: "Free public transport would cut traffic, reduce pollution and help low-income families. The city should introduce it." What is the thesis? | The city should make public transport free. | Traffic is the city's only problem. | Low-income families own too many cars. | Pollution cannot be reduced.
+KC060 | Read: "This phone has a good camera, but the battery dies by noon. I can't recommend it." What is the reviewer's main point? | The phone is not recommended. | The camera is bad. | The battery is excellent. | The phone is cheap.
+KC060 | Where is the thesis of an opinion article usually stated? | In the introduction | Only in the photo caption | In the advertisement | In the reader comments
+KC082 | Which is a clear thesis statement for an opinion essay? | In my opinion, schools should teach media literacy. | Media literacy is a thing in some schools. | This essay is about schools and media. | Schools, media, literacy.
+KC082 | Which sentence uses a formal stance marker? | I firmly believe that local news deserves public funding. | Local news is cool and should get cash. | Local news, yeah, give it money. | Money for local news, I guess.
+KC082 | Choose the best opinion statement. | It is my view that advertising aimed at children should be limited. | Advertising and children are two things. | Children see adverts on television. | There are many adverts.
+KC082 | Which sentence states a position rather than a fact? | I would argue that podcasts are more informative than radio. | Podcasts can be downloaded. | Radio was invented before podcasts. | Many podcasts are free.
+KC083 | Choose the correct sentence. | Although the film was long, I enjoyed it. | Although the film was long, but I enjoyed it. | Although the film long, I enjoyed it. | The film was long although, I enjoyed it.
+KC083 | Complete the sentence: "___ the reviews were bad, the series became popular." | Even though | Because | So | Despite of
+KC083 | Which sentence expresses concession correctly? | Even though I disagree with the author, the article is well written. | Even though I disagree with the author, so the article is well written. | Even I disagree with the author though, the article well written. | I disagree even though with the author the article.
+KC083 | Choose the best way to join the ideas: "The app is free. It has too many adverts." | Although the app is free, it has too many adverts. | Although the app is free, but it has too many adverts. | The app is free because it has too many adverts. | The app is free, so although adverts.
+KC084 | Which sentence is the best conclusion for a positive review? | Overall, I highly recommend this documentary to anyone interested in science. | The documentary has a title. | I watched it on Tuesday. | Documentaries are films.
+KC084 | Which sentence is the best conclusion for a negative review? | In short, I would not recommend this series because the plot is weak. | The series has ten episodes. | I started watching it last week. | Series are popular nowadays.
+KC084 | Choose the best concluding phrase: "___, this podcast is worth your time." | All in all | For example | At first | Meanwhile
+KC084 | Which closing statement gives a clear recommendation? | If you enjoy thrillers, this book is a must-read. | The book has 300 pages. | The author was born in 1970. | I bought the book online.

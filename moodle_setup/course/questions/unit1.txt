@@ -1,0 +1,49 @@
+# kc_id | stem | correct option | distractor | distractor | distractor
+KC001 | Choose the correct form: "My sister ___ to work by bus every day." | goes | go | going | gone
+KC001 | Choose the correct form: "He ___ TV after dinner." | watches | watch | watchs | watching
+KC001 | Choose the correct form: "Maria ___ English in the evening." | studies | study | studys | studying
+KC001 | Which sentence is correct? | The shop opens at nine o'clock. | The shop open at nine o'clock. | The shop opening at nine o'clock. | The shop are open at nine o'clock.
+KC002 | Choose the correct form: "Tom ___ coffee in the morning." | doesn't drink | don't drink | doesn't drinks | isn't drink
+KC002 | Choose the correct form: "We ___ breakfast at home on weekdays." | don't have | doesn't have | not have | aren't have
+KC002 | Which sentence is correct? | She doesn't get up early on Sundays. | She don't get up early on Sundays. | She doesn't gets up early on Sundays. | She not gets up early on Sundays.
+KC002 | Make the sentence negative: "My parents work on Saturdays." | My parents don't work on Saturdays. | My parents doesn't work on Saturdays. | My parents not work on Saturdays. | My parents don't works on Saturdays.
+KC003 | Choose the correct form: "___ your brother walk to school?" | Does | Do | Is | Are
+KC003 | Choose the correct form: "___ you usually have lunch at work?" | Do | Does | Are | Is
+KC003 | Which question is correct? | Does she take the train every morning? | Does she takes the train every morning? | Do she take the train every morning? | Is she take the train every morning?
+KC003 | Choose the correct short answer: "Do they start work at eight?" | Yes, they do. | Yes, they does. | Yes, they are. | Yes, they start.
+KC004 | Which sentence has the correct word order? | I always brush my teeth before bed. | I brush always my teeth before bed. | Always I brush my teeth before bed. | I brush my teeth always before bed.
+KC004 | Which sentence has the correct word order? | She usually takes the bus to work. | She takes usually the bus to work. | Usually she the bus takes to work. | She takes the bus usually to work.
+KC004 | Which sentence has the correct word order? | He is never late for class. | He never is late for class. | He is late never for class. | Never he is late for class.
+KC004 | Put "often" in the correct place: "We eat dinner together." | We often eat dinner together. | We eat often dinner together. | We eat dinner often together. | Often we eat together dinner.
+KC029 | Which verb completes the sentence? "I ___ my teeth after breakfast." | brush | wash | comb | shave
+KC029 | Which verb completes the sentence? "She ___ a shower every morning." | takes | makes | does | washes
+KC029 | Which verb completes the sentence? "He ___ his hair before he leaves the house." | combs | brushes his teeth | wipes | cleans up
+KC029 | What do you do with soap and water before a meal? | wash your hands | dry your hair | make your bed | set your alarm
+KC030 | Which verb completes the sentence? "I ___ the 7:30 bus to the office." | catch | drive | walk | ride on foot
+KC030 | Which verb completes the sentence? "She ___ her bike to school." | rides | drives | catches | takes off
+KC030 | Which verb completes the sentence? "We ___ off the train at Central Station." | get | take | go | leave from
+KC030 | Which phrase means "to travel between home and work regularly"? | commute | arrive | depart | transfer
+KC049 | Read the planner: "6:30 wake up. 7:00 breakfast. 7:45 leave home. 8:30 start work." What does the person do immediately after breakfast? | Leaves home | Wakes up | Starts work | Goes back to bed
+KC049 | Read the note: "First I feed the cat. Then I make coffee. After that I read the news." What happens second? | Making coffee | Feeding the cat | Reading the news | Going to work
+KC049 | Read the planner: "12:00 lunch. 13:00 team meeting. 15:00 gym. 18:00 dinner." Which activity comes before the gym? | Team meeting | Dinner | Lunch only | Going home
+KC049 | Read the note: "Ana showers before breakfast. She checks her email after breakfast. She leaves at 8." What is the correct order? | Shower, breakfast, email, leave | Breakfast, shower, email, leave | Email, shower, breakfast, leave | Shower, email, breakfast, leave
+KC050 | Read the schedule: "Mon 9:00 Dentist, Oak Street. Tue 18:30 Yoga, City Gym. Wed 12:00 Lunch with Sam, Blue Cafe." Where is the yoga class? | City Gym | Oak Street | Blue Cafe | At home
+KC050 | Read the schedule: "Mon 9:00 Dentist, Oak Street. Tue 18:30 Yoga, City Gym. Wed 12:00 Lunch with Sam, Blue Cafe." What time is the dentist appointment? | 9:00 | 12:00 | 18:30 | 8:00
+KC050 | Read the log: "Thursday: English class 17:00-18:30, Room 204." How long is the class? | One and a half hours | One hour | Two hours | Thirty minutes
+KC050 | Read the schedule: "Fri 7:15 Bus 42 from Park Road. Fri 8:00 Staff meeting, Room B." Which bus does the person take on Friday? | Bus 42 | Bus 7 | Bus 15 | Bus 8
+KC051 | Read the timetable: "Mon, Wed, Fri: swimming 6:00-7:00. Tue, Thu: rest." What can you infer about this person? | They exercise regularly in the early morning. | They dislike sport. | They swim every evening. | They only swim at weekends.
+KC051 | Read the planner: "Every Sunday: 10:00 call parents, 11:00 farmers' market, 19:00 cook for the week." What does this suggest? | The person prepares meals in advance. | The person eats out every day. | The person works on Sundays. | The person never talks to family.
+KC051 | Read the timetable: "Mon-Fri: 22:00 bed, 5:30 wake up." What habit does this show? | Going to bed early and rising early | Staying up late | Sleeping in on weekdays | Working night shifts
+KC051 | Read the log: "Tue and Thu 18:00-20:00 evening Spanish course." What can you infer? | The person is learning a language in their free time. | The person teaches Spanish full-time. | The person travels to Spain every week. | The person has no free evenings at all.
+KC073 | Which sentence is written correctly? | My brother and I walk to school every day. | My brother and I walks to school every day. | My brother and me walks to school every day. | My brother and I walking to school every day.
+KC073 | Which sentence is written correctly? | The children play football after school. | The children plays football after school. | The children is play football after school. | The children playing football after school.
+KC073 | Which sentence is written correctly? | Everyone in my family wakes up early. | Everyone in my family wake up early. | Everyone in my family are wake up early. | Everyone in my family waking up early.
+KC073 | Choose the best correction: "The bus leave at seven and arrive at eight." | The bus leaves at seven and arrives at eight. | The bus leave at seven and arrives at eight. | The bus leaves at seven and arrive at eight. | The bus leaving at seven and arriving at eight.
+KC074 | Which paragraph sentence uses the frequency adverb correctly? | On weekdays I usually cook dinner at home. | On weekdays I cook usually dinner at home. | On weekdays usually I dinner cook at home. | On weekdays I cook dinner at usually home.
+KC074 | Which sentence is written correctly? | My father is always tired after work. | My father always is tired after work. | My father is tired always after work. | Always my father tired is after work.
+KC074 | Which sentence is written correctly? | We sometimes go for a walk in the evening. | We go sometimes for a walk in the evening. | We go for sometimes a walk in the evening. | We go for a walk sometimes in evening the.
+KC074 | Choose the best revision: "I drink rarely tea at night." | I rarely drink tea at night. | I drink tea rarely at night never. | Rarely I am drink tea at night. | I drink at night rarely tea.
+KC075 | Choose the best connector: "First, I get dressed. ___, I make breakfast." | Then | Because | But | Although
+KC075 | Choose the best connector: "I finish work at five. ___, I go to the gym." | After that | However | For example | Because of
+KC075 | Which sentence should come LAST in a daily log? | Finally, I go to bed at eleven. | First, I wake up at six. | Then, I have breakfast. | Next, I take the bus to work.
+KC075 | Choose the best order of connectors for a morning routine. | First ... Then ... After that ... Finally | Finally ... Then ... First ... After that | Then ... First ... Finally ... After that | After that ... Finally ... Then ... First

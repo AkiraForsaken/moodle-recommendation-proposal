@@ -1,0 +1,97 @@
+kc_id,unit,unit_name,dimension,kc_name,learning_objective
+KC001,Unit 1,Everyday Routines,Grammar,Present Simple Third-Person Singular inflection (-s/-es),Apply inflectional rules (-s/-es) in affirmative third-person routine sentences.
+KC002,Unit 1,Everyday Routines,Grammar,Present Simple Auxiliary Negation (don't/doesn't),Form negative routine statements using appropriate auxiliary negation.
+KC003,Unit 1,Everyday Routines,Grammar,Interrogative Habits (Do/Does),Construct habitual Yes/No questions with correct auxiliary verb choice.
+KC004,Unit 1,Everyday Routines,Grammar,Frequency Adverb Word Order,"Position adverbs of frequency (always, usually, never) immediately before main verbs."
+KC005,Unit 2,Professional English,Grammar,Formal Salutations & Honorifics,Select formal greetings appropriate for professional email register.
+KC006,Unit 2,Professional English,Grammar,Present Perfect for Professional Experience,Apply present perfect syntax to describe career milestones and task status.
+KC007,Unit 2,Professional English,Grammar,Polite Request Structures (Would/Could),Formulate indirect workplace requests using modal framing.
+KC008,Unit 2,Professional English,Grammar,Passive Voice in Status Reporting,Identify and construct passive voice clauses for corporate reports.
+KC009,Unit 3,Travel & Navigation,Grammar,"Spatial Prepositions (between, next to, opposite)",Describe spatial location using prepositions relative to physical landmarks.
+KC010,Unit 3,Travel & Navigation,Grammar,"Prepositions of Movement (across, through, past)",Apply movement prepositions to express transit routes.
+KC011,Unit 3,Travel & Navigation,Grammar,"Imperative Directions (Turn left, Go straight)",Construct direct imperative sentences for wayfinding.
+KC012,Unit 3,Travel & Navigation,Grammar,"Ordinal Turning Syntax (first right, second left)",Combine ordinal numbers and directional verbs in navigation guides.
+KC013,Unit 4,Media & Opinions,Grammar,"Modals of Obligation (must, should, have to)","Express duty, necessity, and rule obligation using modal auxiliary verbs."
+KC014,Unit 4,Media & Opinions,Grammar,"Modals of Possibility (may, might, could)",Convey tentative possibility and speculation in opinion contexts.
+KC015,Unit 4,Media & Opinions,Grammar,"Stance Clause Framing (believe, think, suggest)",Construct complex sentences introducing cognitive opinions.
+KC016,Unit 5,Food & Dining,Grammar,"Quantifiers with Count/Uncount Nouns (some, any, much, many)",Apply quantifiers matching noun countability in dining contexts.
+KC017,Unit 5,Food & Dining,Grammar,Polite Ordering Structures (I would like / I'll have),Use polite modal phrases for ordering meals.
+KC018,Unit 5,Food & Dining,Grammar,Comparative Adjectives for Taste/Portion,Form comparative adjective phrases evaluating food items.
+KC019,Unit 6,Shopping & Money,Grammar,Comparative Adjective Formations (-er / more),Construct comparative statements comparing product pricing and specifications.
+KC020,Unit 6,Shopping & Money,Grammar,Superlative Adjective Formations (-est / most),Apply superlative forms to identify top-tier retail items.
+KC021,Unit 6,Shopping & Money,Grammar,"Demonstrative Determiners (this, that, these, those)",Use demonstratives matching noun number and physical proximity.
+KC022,Unit 7,Hobbies & Leisure,Grammar,Adverbs of Frequency Placement in Leisure Contexts,Position adverbs of frequency within hobby descriptions.
+KC023,Unit 7,Hobbies & Leisure,Grammar,Gerunds vs. Infinitives after Preference Verbs,"Select gerunds or infinitives following verbs of preference (like, enjoy, prefer)."
+KC024,Unit 7,Hobbies & Leisure,Grammar,"Temporal Prepositions (at, on, in) for Events",Apply time prepositions correctly prior to event schedules.
+KC025,Unit 8,Health & Wellness,Grammar,Imperatives for Medical & Wellness Instructions,Formulate direct imperative sentences giving health advice.
+KC026,Unit 8,Health & Wellness,Grammar,Modal Verbs for Health Recommendations (should/had better),Use advisory modals to suggest medical actions.
+KC027,Unit 8,Health & Wellness,Grammar,Conditionals (Type 1) in Symptom Contexts,Construct first conditional clauses relating symptoms to remedies.
+KC028,Unit 8,Health & Wellness,Grammar,Quantifiers for Medication & Hydration Dosage,Apply dosage quantifiers accurately in medical contexts.
+KC029,Unit 1,Everyday Routines,Vocabulary,Hygiene & Morning Action Verbs,Identify appropriate action verbs for daily hygiene routines.
+KC030,Unit 1,Everyday Routines,Vocabulary,Commute & Transit Verbs,"Use transit verbs (catch, take, ride) in morning routine contexts."
+KC031,Unit 2,Professional English,Vocabulary,Corporate Meeting Terminology,"Define key meeting vocabulary (agenda, minutes, consensus)."
+KC032,Unit 2,Professional English,Vocabulary,Project Management Lexicon,"Apply project management terms (deadline, deliverable, milestone) accurately."
+KC033,Unit 3,Travel & Navigation,Vocabulary,Transit Terminal Vocabulary,"Identify vocabulary associated with transportation hubs (airport, terminal, harbor)."
+KC034,Unit 3,Travel & Navigation,Vocabulary,Ticketing & Reservation Terms,"Recognize terminology for boarding passes, fares, and check-in procedures."
+KC035,Unit 4,Media & Opinions,Vocabulary,Personal Perspective Phrases,"Identify introductory opinion expressions (In my view, From my perspective)."
+KC036,Unit 4,Media & Opinions,Vocabulary,Media Publishing Terminology,"Recognize broadcasting and news reporting lexicon (press release, editorial, headline)."
+KC037,Unit 4,Media & Opinions,Vocabulary,Discourse Markers of Contrast,"Use contrastive transition words (However, On the other hand) in discussions."
+KC038,Unit 5,Food & Dining,Vocabulary,Culinary Preparation Terms,"Identify terms describing food preparation methods (grilled, roasted, steamed)."
+KC039,Unit 5,Food & Dining,Vocabulary,Restaurant Transaction Lexicon,"Recognize dining service terms (bill, receipt, gratuity, server)."
+KC040,Unit 5,Food & Dining,Vocabulary,Dietary Preference Terminology,"Define terms related to dietary requirements (vegan, gluten-free, allergy)."
+KC041,Unit 6,Shopping & Money,Vocabulary,Retail Transaction Vocabulary,"Identify retail terms (receipt, refund, discount, cashier)."
+KC042,Unit 6,Shopping & Money,Vocabulary,Payment Method Terminology,"Apply terms related to transaction modes (credit card, cash, installment, contact-less)."
+KC043,Unit 6,Shopping & Money,Vocabulary,Product Dimension & Material Terms,Recognize terms specifying merchandise features and materials.
+KC044,Unit 7,Hobbies & Leisure,Vocabulary,Recreational Activity Terminology,"Identify terms for creative and outdoor leisure activities (photography, hiking, painting)."
+KC045,Unit 7,Hobbies & Leisure,Vocabulary,Sports & Athletic Equipment Lexicon,Match leisure sports with their respective equipment and venues.
+KC046,Unit 7,Hobbies & Leisure,Vocabulary,Event & Entertainment Terms,"Recognize vocabulary associated with cultural events (exhibition, concert, venue)."
+KC047,Unit 8,Health & Wellness,Vocabulary,Physical Symptom Terminology,"Define terms describing common ailments (headache, fever, nausea)."
+KC048,Unit 8,Health & Wellness,Vocabulary,Medical Instrument & Pharmacy Lexicon,"Identify terms for medical tools and remedies (thermometer, prescription, bandage)."
+KC049,Unit 1,Everyday Routines,Reading,Chronological Schedule Sequencing,Determine chronological activity sequences from daily planner texts.
+KC050,Unit 1,Everyday Routines,Reading,Timetable Fact Extraction,Extract explicit time stamps and locations from personal schedule logs.
+KC051,Unit 1,Everyday Routines,Reading,Habitual Context Inference,Infer lifestyle habits from recurring weekly timetable data.
+KC052,Unit 2,Professional English,Reading,Email Subject Line Purpose,Evaluate subject line effectiveness and identify core email intent.
+KC053,Unit 2,Professional English,Reading,Executive Memo Scanning,Scan corporate memos for designated action items and deadlines.
+KC054,Unit 2,Professional English,Reading,Tone & Register Identification,Differentiate formal business communications from informal workplace messages.
+KC055,Unit 3,Travel & Navigation,Reading,Transit Detour Route Analysis,Analyze transit service alerts to choose alternative transit routes.
+KC056,Unit 3,Travel & Navigation,Reading,Departure Screen Information Scanning,Extract departure gate numbers and flight times from status displays.
+KC057,Unit 3,Travel & Navigation,Reading,Map Legend Symbol Decoding,Interpret map symbols representing public amenities and transport lines.
+KC058,Unit 4,Media & Opinions,Reading,Author Tone & Stance Analysis,"Identify author tone (persuasive, critical, objective) in news commentary."
+KC059,Unit 4,Media & Opinions,Reading,Fact vs. Opinion Distinction,Distinguish verifiable factual statements from subjective commentary.
+KC060,Unit 4,Media & Opinions,Reading,Editorial Thesis Extraction,Determine the primary claim of an argumentative essay or review.
+KC061,Unit 5,Food & Dining,Reading,Menu Item Ingredient Extraction,Read restaurant menus to identify ingredients and dietary suitability.
+KC062,Unit 5,Food & Dining,Reading,Nutritional & Allergen Label Analysis,Extract allergen warnings and dietary notices from food labels.
+KC063,Unit 5,Food & Dining,Reading,Dining Review Scanning,Scan restaurant reviews to evaluate service quality and pricing.
+KC064,Unit 6,Shopping & Money,Reading,Retail Signage & Discount Offer Analysis,Calculate promotional discount terms from promotional store signs.
+KC065,Unit 6,Shopping & Money,Reading,Store Policy Interpretation,Extract return and refund eligibility conditions from customer service notices.
+KC066,Unit 6,Shopping & Money,Reading,Price Comparison Table Reading,Compare product features and pricing across structured spec tables.
+KC067,Unit 7,Hobbies & Leisure,Reading,Event Invitation Detail Extraction,"Extract start times, door openings, and locations from invitation flyers."
+KC068,Unit 7,Hobbies & Leisure,Reading,Leisure Schedule & Timetable Reading,Interpret activity timetables for community centers or sports clubs.
+KC069,Unit 7,Hobbies & Leisure,Reading,Hobby Tutorial Scanning,Scan step-by-step instructional guides for leisure project completion.
+KC070,Unit 8,Health & Wellness,Reading,Prescription Dosage Instructions,Extract dosage frequencies and administration constraints from medical labels.
+KC071,Unit 8,Health & Wellness,Reading,Health Warning Label Interpretation,Identify side effects and precaution warnings on medication packages.
+KC072,Unit 8,Health & Wellness,Reading,Wellness Article Advisory Scanning,Scan preventative health articles for lifestyle recommendations.
+KC073,Unit 1,Everyday Routines,Writing,Subject-Verb Concord in Writing,Draft written sentences maintaining subject-verb agreement for routine events.
+KC074,Unit 1,Everyday Routines,Writing,Adverbial Syntax in Composition,Construct written paragraphs with correctly placed frequency modifiers.
+KC075,Unit 1,Everyday Routines,Writing,Sequential Transition Connectors,"Apply transition markers (First, Then, After that) to order written daily logs."
+KC076,Unit 2,Professional English,Writing,Professional Opening Framing,Write clear introductory sentences for business inquiry emails.
+KC077,Unit 2,Professional English,Writing,Formal Attachment Referencing,Frame professional written references for attached documents.
+KC078,Unit 2,Professional English,Writing,Action Item Bullet Drafting,"Draft concise, imperative action points for executive updates."
+KC079,Unit 3,Travel & Navigation,Writing,Sequential Navigation Writing,Write clear step-by-step directions connecting two points.
+KC080,Unit 3,Travel & Navigation,Writing,Trip Itinerary Framing,Draft written trip itineraries utilizing chronological time markers.
+KC081,Unit 3,Travel & Navigation,Writing,Accommodation Inquiry Writing,Formulate formal written requests regarding hotel amenities or check-in.
+KC082,Unit 4,Media & Opinions,Writing,Written Stance Statement Framing,Write clear opinion thesis statements with formal stance markers.
+KC083,Unit 4,Media & Opinions,Writing,Concession Clause Drafting,Draft written sentences expressing concession using 'Although' and 'Even though'.
+KC084,Unit 4,Media & Opinions,Writing,Product Review Conclusion Writing,Compose concluding recommendation statements for media reviews.
+KC085,Unit 5,Food & Dining,Writing,Special Dietary Request Writing,Write written requests conveying dietary restrictions to venue staff.
+KC086,Unit 5,Food & Dining,Writing,Written Meal Ordering Prompts,Formulate clear written dialogue for placing food and beverage orders.
+KC087,Unit 5,Food & Dining,Writing,Culinary Experience Review Writing,Compose short written feedback evaluating dining experiences.
+KC088,Unit 6,Shopping & Money,Writing,Written Return & Refund Requests,Write formal requests detailing product defects and return claims.
+KC089,Unit 6,Shopping & Money,Writing,Product Feature Comparison Writing,Compose written summaries comparing two retail items.
+KC090,Unit 6,Shopping & Money,Writing,Budgetary Expenditure Log Framing,Draft structured expense summaries with explicit numerical amounts.
+KC091,Unit 7,Hobbies & Leisure,Writing,Personal Hobby Description Writing,Compose written paragraphs describing personal recreational interests.
+KC092,Unit 7,Hobbies & Leisure,Writing,Event Invitation Drafting,Draft informal written invitations specifying event details.
+KC093,Unit 7,Hobbies & Leisure,Writing,Leisure Activity Post Summaries,Write short social posts summarizing weekend leisure activities.
+KC094,Unit 8,Health & Wellness,Writing,Symptom Description Writing,Compose written descriptions detailing symptoms for medical intake forms.
+KC095,Unit 8,Health & Wellness,Writing,Wellness Plan Drafting,Draft daily health and hydration routines using advisory structures.
+KC096,Unit 8,Health & Wellness,Writing,Medical Appointment Request Writing,Write formal appointment booking requests for healthcare consultations.

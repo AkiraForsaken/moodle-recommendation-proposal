@@ -41,7 +41,9 @@ from sklearn.metrics import accuracy_score, log_loss, roc_auc_score
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from kt_common import (
     ARTIFACTS_DIR,
+    DATASET_NAME,
     EMB_TYPE,
+    dataset_artifacts_dir,
     load_data_config,
     make_dataset,
     TRAIN_FOLD,
@@ -132,7 +134,7 @@ def baseline_scores(data_cfg: dict) -> tuple[list[dict], int, int]:
 
 
 def evaluate_run(
-    model_name: str, seed_dir: Path, data_cfg: dict, loader, device
+    model_name: str, seed_dir: Path, data_cfg: dict, loader, device, eval_dir=EVAL_DIR
 ) -> dict:
     import torch
     from pykt.models import evaluate, init_model
@@ -144,7 +146,7 @@ def evaluate_run(
     )
     model.eval()
 
-    pred_dir = EVAL_DIR / "predictions"
+    pred_dir = eval_dir / "predictions"
     pred_dir.mkdir(parents=True, exist_ok=True)
     pred_path = pred_dir / f"{model_name}_{seed_dir.name}_test_predictions.txt"
     pykt_auc, pykt_acc = evaluate(model, loader, model_name, str(pred_path))
@@ -178,14 +180,16 @@ def main() -> None:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     ap.add_argument("--models", nargs="+", default=["dkt", "akt", "sakt"])
+    ap.add_argument("--dataset-name", default=DATASET_NAME)
     args = ap.parse_args()
 
     import torch
     from torch.utils.data import DataLoader
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    data_cfg = load_data_config()
-    EVAL_DIR.mkdir(parents=True, exist_ok=True)
+    data_cfg = load_data_config(args.dataset_name)
+    eval_dir = dataset_artifacts_dir(args.dataset_name) / "evaluation"
+    eval_dir.mkdir(parents=True, exist_ok=True)
 
     base_rows, n_targets_csv, n_test_learners = baseline_scores(data_cfg)
     test_loader = DataLoader(
@@ -194,14 +198,16 @@ def main() -> None:
 
     per_run = []
     for model_name in args.models:
-        seed_dirs = sorted((ARTIFACTS_DIR / model_name).glob("seed*/"))
+        seed_dirs = sorted(
+            (dataset_artifacts_dir(args.dataset_name) / model_name).glob("seed*/")
+        )
         seed_dirs = [d for d in seed_dirs if (d / f"{EMB_TYPE}_model.ckpt").exists()]
         if not seed_dirs:
             print(
                 f"WARNING: no trained checkpoints for {model_name}; run train.py first"
             )
         for d in seed_dirs:
-            r = evaluate_run(model_name, d, data_cfg, test_loader, device)
+            r = evaluate_run(model_name, d, data_cfg, test_loader, device, eval_dir)
             if r["n_targets"] != n_targets_csv:
                 raise RuntimeError(
                     f"{model_name}/{d.name}: {r['n_targets']} targets, expected {n_targets_csv}"
@@ -244,8 +250,12 @@ def main() -> None:
         f"(every answer except each learner's first)\n"
         f"- Model selection used the validation fold only; the test split was not used in training\n"
         f"- Mean ± sample std over seeds (std shown only when more than one seed)\n"
-        f"- Synthetic dataset: absolute numbers are properties of the generator, not of real learners. "
-        f"DKT/SAKT predict from KC ids; AKT also receives item ids, so the models do not see identical inputs.\n"
+        + (
+            "- Synthetic dataset: absolute numbers are properties of the generator, not of real learners. "
+            if args.dataset_name == DATASET_NAME
+            else f"- Dataset: `{args.dataset_name}`; conclusions apply to this population and its mapped items.\n"
+        )
+        + "DKT/SAKT predict from KC ids; AKT also receives item ids, so the models do not see identical inputs.\n"
     )
     md = (
         header
@@ -255,11 +265,11 @@ def main() -> None:
         + to_markdown(runs.round(4))
         + "\n"
     )
-    (EVAL_DIR / "test_comparison.md").write_text(md)
+    (eval_dir / "test_comparison.md").write_text(md)
     pd.concat([runs, pd.DataFrame(base_rows)], ignore_index=True).to_csv(
-        EVAL_DIR / "test_comparison.csv", index=False
+        eval_dir / "test_comparison.csv", index=False
     )
-    (EVAL_DIR / "test_comparison.json").write_text(
+    (eval_dir / "test_comparison.json").write_text(
         json.dumps(
             {
                 "n_test_learners": n_test_learners,
@@ -272,7 +282,7 @@ def main() -> None:
     )
 
     print("\n" + md)
-    print(f"Saved to {EVAL_DIR}")
+    print(f"Saved to {eval_dir}")
 
 
 if __name__ == "__main__":

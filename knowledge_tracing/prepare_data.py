@@ -6,7 +6,7 @@ Transforms the raw event log into the per-learner sequence CSV used by pyKT
 (fold, uid, questions, concepts, responses, timestamps, usetimes, selectmasks)
 and writes the ID maps needed to link items / KCs to the Moodle catalogue later.
 
-Standalone: touches nothing in learner_model/ or recommender/.
+Standalone: prepares knowledge-tracing inputs; it does not build learner profiles.
 
 Usage (from the project root):
     python knowledge_tracing/prepare_data.py
@@ -29,6 +29,7 @@ Outputs (in --output-dir):
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -42,6 +43,8 @@ import pandas as pd
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_INPUT = PROJECT_ROOT / "data" / "raw" / "english_learning_events.csv"
 DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "data" / "processed"
+MOODLE_INPUT = PROJECT_ROOT / "data" / "question_answer_events.csv"
+MOODLE_MAPPING = PROJECT_ROOT / "data" / "moodle_question_kc_map.csv"
 
 DEFAULT_SEED = 20240116  # seed reported in dataset_summary.json
 MAX_SEQ_LEN = 200  # max observed is 185, so truncation should be a no-op
@@ -181,7 +184,90 @@ def sort_chronologically(df: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
 # --------------------------------------------------------------------------- #
 # Step 2.3 - contiguous ID maps (0-based; pyKT reserves -1 for padding)
 # --------------------------------------------------------------------------- #
-def build_maps(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+def build_maps(
+    df: pd.DataFrame, question_kc_mapping: pd.DataFrame | None = None
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    if question_kc_mapping is not None:
+        required = {
+            "question_bank_entry_id",
+            "kc_id",
+            "kc_dimension",
+            "mapping_version",
+            "mapping_source",
+        }
+        missing = required.difference(question_kc_mapping.columns)
+        if missing:
+            raise ValueError(
+                f"Moodle question-to-KC mapping is missing columns: {sorted(missing)}"
+            )
+        mapping = question_kc_mapping.copy()
+        if mapping.empty or mapping[
+            [
+                "question_bank_entry_id",
+                "kc_id",
+                "kc_dimension",
+                "mapping_version",
+                "mapping_source",
+            ]
+        ].isna().any().any():
+            raise ValueError(
+                "Moodle question-to-KC mapping must contain complete, non-empty rows"
+            )
+        mapping["item_id"] = "moodle-qbe:" + mapping[
+            "question_bank_entry_id"
+        ].astype(str)
+        mapping["kc_id"] = mapping["kc_id"].astype(str)
+        mapping["kc_dimension"] = (
+            mapping["kc_dimension"].astype(str).str.strip().str.lower()
+        )
+        if mapping["item_id"].duplicated().any():
+            raise ValueError("Moodle question-to-KC mapping contains duplicate items")
+        if mapping["mapping_version"].astype(str).str.strip().nunique() != 1:
+            raise ValueError(
+                "Moodle question-to-KC mapping must use exactly one mapping_version"
+            )
+        if mapping[["kc_id", "kc_dimension"]].isna().any().any():
+            raise ValueError("Moodle question-to-KC mapping contains missing KC fields")
+        if mapping.groupby("kc_id")["kc_dimension"].nunique().gt(1).any():
+            raise ValueError("A Moodle KC has conflicting dimensions in its mapping")
+        event_items = set(df["item_id"].astype(str))
+        mapped_items = set(mapping["item_id"])
+        if event_items - mapped_items:
+            raise ValueError(
+                "Moodle answer events contain items absent from the curated crosswalk: "
+                f"{sorted(event_items - mapped_items)[:10]}"
+            )
+        item_kc = mapping.set_index("item_id")["kc_id"]
+        if not df["kc_id"].astype(str).eq(df["item_id"].astype(str).map(item_kc)).all():
+            raise ValueError("Moodle event KC assignments differ from the curated crosswalk")
+        event_dimensions = mapping.set_index("item_id")["kc_dimension"]
+        if not df["kc_dimension"].astype(str).str.lower().eq(
+            df["item_id"].astype(str).map(event_dimensions)
+        ).all():
+            raise ValueError(
+                "Moodle event KC dimensions differ from the curated crosswalk"
+            )
+        concept_map = (
+            mapping[["kc_id", "kc_dimension"]]
+            .drop_duplicates()
+            .sort_values("kc_id")
+            .reset_index(drop=True)
+        )
+        concept_map.insert(1, "concepts", np.arange(len(concept_map), dtype=int))
+        question_map = (
+            mapping[["item_id", "kc_id"]]
+            .sort_values("item_id")
+            .reset_index(drop=True)
+        )
+        question_map.insert(1, "questions", np.arange(len(question_map), dtype=int))
+        question_map = question_map.merge(concept_map, on="kc_id", how="left")
+        return (
+            question_map[
+                ["item_id", "questions", "kc_id", "concepts", "kc_dimension"]
+            ],
+            concept_map,
+        )
+
     # Every item must belong to exactly one KC, otherwise the item -> concept
     # mapping used by pyKT (and later the Moodle mapping) is ambiguous.
     kcs_per_item = df.groupby("item_id")["kc_id"].nunique()
@@ -270,9 +356,14 @@ def build_sequences(
 # --------------------------------------------------------------------------- #
 def assign_splits(seq: pd.DataFrame, seed: int) -> pd.DataFrame:
     n = len(seq)
-    n_train = int(round(SPLIT_RATIOS["train"] * n))
-    n_valid = int(round(SPLIT_RATIOS["valid"] * n))
-    n_test = n - n_train - n_valid
+    if n < 3:
+        raise ValueError(
+            "At least 3 learners with answer events are required for separate "
+            "train, validation, and test splits"
+        )
+    n_test = max(1, int(round(SPLIT_RATIOS["test"] * n)))
+    n_valid = max(1, int(round(SPLIT_RATIOS["valid"] * n)))
+    n_train = n - n_valid - n_test
 
     rng = np.random.RandomState(seed)
     perm = rng.permutation(n)  # positions into seq (sorted by learner_id)
@@ -294,8 +385,19 @@ def main() -> None:
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    ap.add_argument("--input", type=Path, default=DEFAULT_INPUT)
-    ap.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
+    ap.add_argument("--input", type=Path, default=None)
+    ap.add_argument("--output-dir", type=Path, default=None)
+    ap.add_argument(
+        "--dataset-name",
+        choices=["english_kt", "moodle_kt"],
+        default="english_kt",
+    )
+    ap.add_argument(
+        "--question-mapping",
+        type=Path,
+        default=None,
+        help="curated Moodle question-bank-item to KC crosswalk CSV",
+    )
     ap.add_argument("--seed", type=int, default=DEFAULT_SEED)
     ap.add_argument(
         "--timestamps-ms", action="store_true", help="write timestamps in milliseconds"
@@ -306,24 +408,55 @@ def main() -> None:
         help="warn instead of failing on count mismatches",
     )
     args = ap.parse_args()
+    if args.input is None:
+        args.input = DEFAULT_INPUT if args.dataset_name == "english_kt" else MOODLE_INPUT
+    if args.output_dir is None:
+        args.output_dir = (
+            DEFAULT_OUTPUT_DIR
+            if args.dataset_name == "english_kt"
+            else DEFAULT_OUTPUT_DIR / "moodle_kt"
+        )
+    if args.dataset_name == "moodle_kt" and args.question_mapping is None:
+        args.question_mapping = MOODLE_MAPPING
+    if args.dataset_name == "english_kt" and args.question_mapping is not None:
+        raise ValueError("--question-mapping is only valid for --dataset-name moodle_kt")
 
-    checks = Checks(strict=not args.no_strict)
+    checks = Checks(strict=not args.no_strict and args.dataset_name == "english_kt")
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
     # 2.1 ------------------------------------------------------------------
     raw = load_raw(args.input)
-    checks.expect("raw_rows", len(raw), EXPECTED["raw_rows"])
+    if args.dataset_name == "english_kt":
+        checks.expect("raw_rows", len(raw), EXPECTED["raw_rows"])
     answers, filter_info = filter_answers(raw)
-    checks.expect("answer_rows", len(answers), EXPECTED["answer_rows"])
+    if answers.empty:
+        sys.exit("ERROR: no valid binary answer events remain after filtering")
+    if args.dataset_name == "english_kt":
+        checks.expect("answer_rows", len(answers), EXPECTED["answer_rows"])
 
     # 2.2 ------------------------------------------------------------------
     answers, order_info = sort_chronologically(answers)
 
     # 2.3 ------------------------------------------------------------------
-    question_map, concept_map = build_maps(answers)
-    checks.expect("learners", answers["learner_id"].nunique(), EXPECTED["learners"])
-    checks.expect("concepts", len(concept_map), EXPECTED["concepts"])
-    checks.expect("questions", len(question_map), EXPECTED["questions"])
+    question_mapping = (
+        pd.read_csv(
+            args.question_mapping,
+            dtype={
+                "question_bank_entry_id": str,
+                "kc_id": str,
+                "kc_dimension": str,
+                "mapping_version": str,
+                "mapping_source": str,
+            },
+        )
+        if args.question_mapping is not None
+        else None
+    )
+    question_map, concept_map = build_maps(answers, question_mapping)
+    if args.dataset_name == "english_kt":
+        checks.expect("learners", answers["learner_id"].nunique(), EXPECTED["learners"])
+        checks.expect("concepts", len(concept_map), EXPECTED["concepts"])
+        checks.expect("questions", len(question_map), EXPECTED["questions"])
 
     # 2.4 + 3 --------------------------------------------------------------
     seq, seq_info = build_sequences(
@@ -335,10 +468,55 @@ def main() -> None:
     assert seq["learner_id"].is_unique
     sizes = seq["split"].value_counts().to_dict()
     expected_sizes = {"train": 840, "valid": 120, "test": 240}
-    if len(seq) == EXPECTED["learners"]:
+    if args.dataset_name == "english_kt" and len(seq) == EXPECTED["learners"]:
         checks.expect("split_train", sizes.get("train", 0), expected_sizes["train"])
         checks.expect("split_valid", sizes.get("valid", 0), expected_sizes["valid"])
         checks.expect("split_test", sizes.get("test", 0), expected_sizes["test"])
+
+    mapping_coverage = None
+    if question_mapping is not None:
+        def question_indices_for_split(split):
+            return {
+                int(value)
+                for sequence in seq.loc[seq["split"].eq(split), "questions"]
+                for value in sequence.split(",")
+            }
+
+        trained_question_indices = question_indices_for_split("train")
+        validation_question_indices = question_indices_for_split("valid")
+        test_question_indices = question_indices_for_split("test")
+        trained_items = set(
+            question_map.loc[
+                question_map["questions"].isin(trained_question_indices), "item_id"
+            ].astype(str)
+        )
+        validation_items = set(
+            question_map.loc[
+                question_map["questions"].isin(validation_question_indices), "item_id"
+            ].astype(str)
+        )
+        test_items = set(
+            question_map.loc[
+                question_map["questions"].isin(test_question_indices), "item_id"
+            ].astype(str)
+        )
+        mapped_items = set(question_map["item_id"].astype(str))
+        observed_items = set(answers["item_id"].astype(str))
+        mapping_coverage = {
+            "mapping_version": str(question_mapping["mapping_version"].iloc[0]),
+            "mapping_file_sha256": hashlib.sha256(
+                args.question_mapping.read_bytes()
+            ).hexdigest(),
+            "mapped_questions": len(mapped_items),
+            "questions_with_answer_events": len(mapped_items & observed_items),
+            "mapped_questions_without_answer_events": len(mapped_items - observed_items),
+            "questions_observed_in_train": len(trained_items),
+            "mapped_questions_without_train_exposure": len(mapped_items - trained_items),
+            "validation_questions_without_train_exposure": len(
+                validation_items - trained_items
+            ),
+            "test_questions_without_train_exposure": len(test_items - trained_items),
+        }
 
     # Write outputs ----------------------------------------------------------
     out_cols = [
@@ -379,6 +557,11 @@ def main() -> None:
 
     manifest = {
         "input": str(args.input),
+        "dataset_name": args.dataset_name,
+        "question_mapping": (
+            str(args.question_mapping) if args.question_mapping is not None else None
+        ),
+        "mapping_coverage": mapping_coverage,
         "seed": args.seed,
         "split_ratios": SPLIT_RATIOS,
         "fold_code": FOLD_CODE,

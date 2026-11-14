@@ -219,6 +219,7 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
+# -------------------------------
 text_aggregate.py
 aggregated_code.txt
 directory_structure.py
@@ -227,3 +228,4 @@ experiment/
 
 data/
 artifacts/
+thesis_docs/

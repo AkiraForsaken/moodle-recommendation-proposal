@@ -52,17 +52,40 @@ TRAIN_FOLD, VALID_FOLD, TEST_FOLD = 0, 1, -1
 # --------------------------------------------------------------------------- #
 # Config loading
 # --------------------------------------------------------------------------- #
-def load_data_config() -> dict:
+def load_data_config(dataset_name: str = DATASET_NAME) -> dict:
     """Return the *inner* pyKT data config with an absolute dpath."""
     path = CONFIG_DIR / "data_config.json"
     if not path.exists():
         raise SystemExit(
             f"{path} not found - run `python knowledge_tracing/init_pykt_dataset.py` first."
         )
-    cfg = json.loads(path.read_text())[DATASET_NAME]
+    configs = json.loads(path.read_text())
+    if dataset_name not in configs:
+        raise ValueError(
+            f"Dataset {dataset_name!r} is not configured in {path}; "
+            "run init_pykt_dataset.py for that dataset first."
+        )
+    cfg = configs[dataset_name]
     cfg = dict(cfg)
     cfg["dpath"] = str((PROJECT_ROOT / cfg["dpath"]).resolve())
+    if "mapping_dir" in cfg:
+        mapping_dir = Path(cfg["mapping_dir"])
+        cfg["mapping_dir"] = str(
+            mapping_dir if mapping_dir.is_absolute() else PROJECT_ROOT / mapping_dir
+        )
     return cfg
+
+
+def dataset_artifacts_dir(dataset_name: str = DATASET_NAME) -> Path:
+    """Keep the original English artifact layout; isolate other datasets."""
+    return ARTIFACTS_DIR if dataset_name == DATASET_NAME else ARTIFACTS_DIR / dataset_name
+
+
+def selected_model_path(dataset_name: str = DATASET_NAME) -> Path:
+    filename = "selected_model.json" if dataset_name == DATASET_NAME else (
+        f"{dataset_name}_selected_model.json"
+    )
+    return CONFIG_DIR / filename
 
 
 def load_model_configs() -> dict:

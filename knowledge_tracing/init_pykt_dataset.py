@@ -35,7 +35,7 @@ from pathlib import Path
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from kt_common import CONFIG_DIR, DATASET_NAME, PROJECT_ROOT
+from kt_common import CONFIG_DIR, PROJECT_ROOT
 
 SEQ_FIELDS = [
     "questions",
@@ -70,9 +70,8 @@ def main() -> None:
         type=Path,
         default=PROJECT_ROOT / "data/processed/pykt_formatted_sequences.csv",
     )
-    ap.add_argument(
-        "--output-dir", type=Path, default=PROJECT_ROOT / "data/processed/pykt_english"
-    )
+    ap.add_argument("--output-dir", type=Path, default=None)
+    ap.add_argument("--dataset-name", default="english_kt")
     ap.add_argument("--maxlen", type=int, default=200)
     ap.add_argument(
         "--no-strict",
@@ -80,6 +79,9 @@ def main() -> None:
         help="warn instead of failing on split-size mismatch",
     )
     args = ap.parse_args()
+    if args.output_dir is None:
+        output_name = "pykt_english" if args.dataset_name == "english_kt" else "pykt_moodle"
+        args.output_dir = PROJECT_ROOT / "data/processed" / output_name
 
     if not args.input.exists():
         sys.exit(
@@ -158,23 +160,32 @@ def main() -> None:
         rel_dpath = str(args.output_dir.resolve().relative_to(PROJECT_ROOT))
     except ValueError:
         rel_dpath = str(args.output_dir.resolve())
-    data_config = {
-        DATASET_NAME: {
-            "dpath": rel_dpath,  # resolved against the project root at runtime
-            "num_q": num_q,
-            "num_c": num_c,
-            "max_concepts": 1,  # one KC per item in this dataset
-            "input_type": ["questions", "concepts"],
-            "maxlen": args.maxlen,
-            "emb_path": "",
-            "train_valid_file": "train_valid_sequences.csv",
-            "test_file": "test_sequences.csv",
-            "folds": [0, 1],
-            "fold_meaning": {"0": "train", "1": "valid", "-1": "test (separate file)"},
-        }
+    existing_config_path = CONFIG_DIR / "data_config.json"
+    all_configs = (
+        json.loads(existing_config_path.read_text())
+        if existing_config_path.exists()
+        else {}
+    )
+    try:
+        mapping_dir = str(proc_dir.resolve().relative_to(PROJECT_ROOT))
+    except ValueError:
+        mapping_dir = str(proc_dir.resolve())
+    all_configs[args.dataset_name] = {
+        "dpath": rel_dpath,  # resolved against the project root at runtime
+        "mapping_dir": mapping_dir,
+        "num_q": num_q,
+        "num_c": num_c,
+        "max_concepts": 1,  # one KC per item in this dataset
+        "input_type": ["questions", "concepts"],
+        "maxlen": args.maxlen,
+        "emb_path": "",
+        "train_valid_file": "train_valid_sequences.csv",
+        "test_file": "test_sequences.csv",
+        "folds": [0, 1],
+        "fold_meaning": {"0": "train", "1": "valid", "-1": "test (separate file)"},
     }
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-    (CONFIG_DIR / "data_config.json").write_text(json.dumps(data_config, indent=2))
+    (CONFIG_DIR / "data_config.json").write_text(json.dumps(all_configs, indent=2))
     manifest = {
         "source": str(args.input),
         "learners_per_split": sizes,
@@ -196,7 +207,7 @@ def main() -> None:
     print(
         f"Wrote {args.output_dir}/test_sequences.csv ({sizes['test']} learners: fold -1 = test)"
     )
-    print(f"Wrote {CONFIG_DIR / 'data_config.json'}")
+    print(f"Configured dataset {args.dataset_name!r} in {CONFIG_DIR / 'data_config.json'}")
 
 
 if __name__ == "__main__":

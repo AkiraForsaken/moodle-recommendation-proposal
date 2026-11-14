@@ -113,8 +113,10 @@ def classify_event(event_name, target, action):
     if name in LESSON_EVENT_SET:
         return "lesson_interaction"
     if name in QUIZ_ATTEMPT_SET:
-        # Reviewing a graded attempt is feedback-seeking, not assessment.
-        if lowered.endswith(("attempt_reviewed", "attempt_viewed")):
+        # Reviewing a graded attempt (review.php) is feedback-seeking, not
+        # assessment. attempt_viewed fires on attempt.php while the attempt is
+        # being taken, so it belongs to the attempt itself.
+        if lowered.endswith("attempt_reviewed"):
             return "quiz_review"
         return "quiz_attempt"
     if name in CONTENT_VIEW_SET:

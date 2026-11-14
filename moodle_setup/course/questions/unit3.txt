@@ -1,0 +1,48 @@
+KC009 | Choose the correct preposition: "The bank is ___ the post office and the bakery." | between | opposite of | next | among to
+KC009 | Choose the correct preposition: "The hotel is ___ the station, on the other side of the street." | opposite | between | next | under
+KC009 | Choose the correct phrase: "The pharmacy is ___ the supermarket; they share a wall." | next to | between | opposite from | across
+KC009 | Which sentence describes location correctly? | The taxi rank is in front of the terminal. | The taxi rank is in front the terminal. | The taxi rank is front of the terminal. | The taxi rank is on front of the terminal.
+KC010 | Choose the correct preposition: "Walk ___ the bridge to reach the old town." | across | between | at | opposite
+KC010 | Choose the correct preposition: "The train goes ___ a long tunnel." | through | across of | on | past to
+KC010 | Choose the correct preposition: "Go ___ the church and you will see the museum on your right." | past | through | between | among
+KC010 | Choose the correct preposition: "We walked ___ the river for two kilometres." | along | through | between | at
+KC011 | Which sentence gives a direction correctly? | Turn left at the traffic lights. | You turning left at the traffic lights. | Turns left at the traffic lights. | To turn left at the traffic lights.
+KC011 | Choose the correct imperative: "___ straight on for two blocks." | Go | Going | Goes | To go
+KC011 | Which is a correct negative instruction? | Don't cross the road here. | Not cross the road here. | Doesn't cross the road here. | No crossing you the road here.
+KC011 | Choose the correct form: "___ the second exit at the roundabout." | Take | Takes | Taking | Took
+KC012 | Which sentence is correct? | Take the first right after the bank. | Take the one right after the bank. | Take the right first after bank. | Take first the right after the bank.
+KC012 | Choose the correct phrase: "Turn left at the ___ junction." | second | two | twice | secondly
+KC012 | Which direction is correctly formed? | Take the third street on the left. | Take the three street on the left. | Take the street third on left. | Take third the street on the left.
+KC012 | You pass one street on the right and turn into the next one. What did you take? | The second right | The first right | The first left | The third right
+KC033 | Where do you wait for your flight after passing security? | The departure lounge | The baggage claim | The car park | The check-in desk
+KC033 | What is a "terminal"? | A building where passengers begin or end a journey | A ticket for one journey | A seat on a plane | A map of the city
+KC033 | Where do ships and ferries arrive and depart? | A harbour | A platform | A runway | A motorway
+KC033 | Where do you stand to board a train? | On the platform | In the cockpit | On the runway | At the gate desk only
+KC034 | What is a "boarding pass"? | A document that allows you to get on a plane | A list of prices | A hotel reservation | A map of the airport
+KC034 | What does "fare" mean? | The price of a journey | The time of departure | The seat number | The luggage limit
+KC034 | What do you do at "check-in"? | Register for your flight and drop off your bags | Collect your bags after landing | Buy food on the plane | Show your ticket to the driver
+KC034 | Which ticket lets you travel to a place and back again? | A return ticket | A single ticket | A boarding card | A season pass only
+KC055 | Read the alert: "Line 4 is closed between Central and Park Road. Passengers should use Bus 12 from Central." You are at Central and want to reach Park Road. What should you do? | Take Bus 12 | Take Line 4 | Walk to the airport | Wait for Line 4 to reopen
+KC055 | Read the alert: "Due to roadworks, Bus 9 will not stop at Market Square. Use the stop at King Street instead." Where should you catch Bus 9? | King Street | Market Square | The roadworks | Bus 9 is cancelled
+KC055 | Read the alert: "The 8:15 train to Northfield is cancelled. The next service departs at 8:45 from Platform 3." What is the earliest train you can take? | The 8:45 from Platform 3 | The 8:15 from Platform 3 | The 8:15 from Platform 1 | There are no trains today
+KC055 | Read the alert: "Tram 2 is delayed by 20 minutes. Tram 5 follows the same route as far as City Hall." You need to get to City Hall quickly. What is the best choice? | Take Tram 5 | Wait for Tram 2 | Take a train | Walk the whole route
+KC056 | Read the screen: "BA212 London 14:20 Gate A7 Boarding. LH400 Frankfurt 14:45 Gate B2 Delayed." Which gate does the London flight leave from? | A7 | B2 | A2 | B7
+KC056 | Read the screen: "BA212 London 14:20 Gate A7 Boarding. LH400 Frankfurt 14:45 Gate B2 Delayed." What is the status of the Frankfurt flight? | Delayed | Boarding | Cancelled | Departed
+KC056 | Read the screen: "Platform 2: 09:05 Oxford. Platform 5: 09:12 Bristol. Platform 1: 09:20 York." What time does the Bristol train leave? | 09:12 | 09:05 | 09:20 | 09:15
+KC056 | Read the screen: "AF118 Paris 16:10 Gate C4 Gate closing." What should a passenger for Paris do? | Go to Gate C4 immediately | Wait in the lounge | Collect baggage | Check in at the desk
+KC057 | On a city map, what does the symbol "i" usually mean? | Tourist information | Internet cafe | Ice rink | Industrial area
+KC057 | A map legend shows a blue "P". What does it represent? | Parking | Police station | Post office | Park
+KC057 | On a transport map, a dashed line is labelled "under construction". What does it tell you? | The line is not open yet | The line is the fastest route | The line runs only at night | The line is free to use
+KC057 | A map legend shows a knife and fork. What will you find there? | A restaurant | A hospital | A hotel | A museum
+KC079 | Which set of directions is written most clearly? | Leave the station, turn right, and walk two blocks to the library. | Library is right two blocks station leave. | You go and then it is there after some walking. | Turn and walk and you find it maybe.
+KC079 | Choose the best next step: "First, exit the hotel and turn left. ___" | Then, walk straight until you reach the bridge. | Bridge is walking straight then. | Because the bridge is straight. | However, the bridge.
+KC079 | Which sentence completes the directions? "Go past the bank. ___, the cinema is on your left." | After that | Although | Because | Unless
+KC079 | Which directions connect two points step by step? | From the square, take the first left, then cross the bridge; the museum is opposite the park. | The museum is nice and the square is big. | You can't miss it, it's somewhere near a bridge. | Bridge, left, museum, park, square.
+KC080 | Which itinerary line is written correctly? | Day 1: Arrive in Rome at 10:00 and check in at the hotel. | Day 1: Arriving Rome 10:00 hotel checking. | Rome we arrive and the hotel on day. | At 10:00 day 1 Rome hotel.
+KC080 | Choose the best time marker: "___ the morning, we visit the castle; in the afternoon, we take a boat trip." | In | At | On | By
+KC080 | Which sentence fits a trip itinerary? | On Tuesday at 9 am, we depart for the coast by coach. | We like the coast very much. | The coast was beautiful last year. | Coaches are comfortable.
+KC080 | Choose the best order for an itinerary. | 08:00 breakfast; 09:30 city tour; 13:00 lunch; 15:00 museum visit | 13:00 lunch; 08:00 breakfast; 15:00 museum visit; 09:30 city tour | 15:00 museum visit; 13:00 lunch; 09:30 city tour; 08:00 breakfast | 09:30 city tour; 15:00 museum visit; 08:00 breakfast; 13:00 lunch
+KC081 | Which sentence is a polite written inquiry to a hotel? | Could you tell me whether breakfast is included in the room rate? | Is breakfast in or not? | Tell me about breakfast. | Breakfast?
+KC081 | Choose the best sentence for a formal accommodation email. | I would like to know if early check-in is available on 3 July. | I want to check in early, okay? | Let me in early on 3 July. | Early check-in 3 July, do it.
+KC081 | Which sentence asks about hotel amenities appropriately? | Does the hotel have a swimming pool and free Wi-Fi? | You got pool and Wi-Fi? | Pool, Wi-Fi, yes or no. | I demand a pool and Wi-Fi.
+KC081 | Complete the formal request: "I would be grateful if you ___ a room with a sea view." | could reserve | reserve me | reserving | will to reserve

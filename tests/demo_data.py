@@ -1,11 +1,10 @@
 """
 Synthetic collector output (activity_catalog / learning_events / quiz_attempts).
 
-Used by the API tests and by `python -m tests.demo_data <dir>` to get a cohort
-that actually exercises every mastery band. The real Moodle test cohort has only
-two learners, both 'high' everywhere, so it cannot demonstrate a recommendation.
+Used to provide deterministic collector CSVs for learner-model tests and by
+`python -m tests.demo_data <dir>` for local experiments.
 
-Column names follow what model/ and recommender/ read.
+Column names follow the Moodle collector export contract.
 """
 
 import sys
@@ -20,7 +19,7 @@ BASE_UNIX = 1_790_000_000  # arbitrary fixed point in time
 
 def make_catalog() -> pd.DataFrame:
     rows, cmid, seq = [], 100, 1
-    # Section 0 is the course-wide block; the recommender must ignore it.
+    # Section 0 is the course-wide block, not a learning topic.
     rows.append(dict(course_module_id=cmid, activity_type="forum", activity_id=1,
                      activity_name="Announcements", topic="General", sequence=0,
                      completion_tracking=0, visible=1, section_number=0))
@@ -35,7 +34,7 @@ def make_catalog() -> pd.DataFrame:
 
 
 def make_cohort(catalog: pd.DataFrame, seed: int = 7):
-    """11 learners (ids 1-11) with different mastery profiles. Unknown ids act as newcomers."""
+    """Create 11 learners with varied activity and quiz-score histories."""
     rng = np.random.default_rng(seed)
     learning = catalog[catalog["section_number"] > 0]
     events, quizzes, log_id = [], 0, 0
